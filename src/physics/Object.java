@@ -47,12 +47,33 @@ class Line {
         float xcoeff = ((Double)Math.sqrt(Math.pow(x1, 2) + Math.pow(x2, 2))).floatValue();
         float ycoeff = ((Double)Math.sqrt(Math.pow(y1, 2) + Math.pow(y2, 2))).floatValue();
 
+        System.out.println(x1.compareTo(0f));
+        StringBuilder st = new StringBuilder("%.2fx + %.2fy");
 
-        this.Direction = new Formula(String.format("%s%.2fx %s %.2fy%n", ((x1!=0 && x2!=0) && (x1<0 && 0<x2) || (x1>0 && 0>x2))?"-":"",
-                xcoeff, ((y1!=0 && y2!=0) && (y1<0 && 0<y2) || (y1>0 && 0>y2) )?"-":"+", ycoeff)); // TODO: this doesnt work
-        System.out.println(this.Direction.getEquation());
-        
-        this.Distance = ((Double)Math.sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1))).floatValue();
+        // 0 Origin y failsafe
+        if (y1.compareTo(0f)==0) { // If y1=0, y2=neg
+            if (y2.compareTo(0f)<0) {st.replace(6, 7, "-");}
+        }
+        else if (y2.compareTo(0f)==0) { // If y1=neg, y2=0
+            if (y2.compareTo(0f)<0) {st.replace(6, 7, "-");}
+        }
+        else {
+            if ((y1.compareTo(0f)<0 && y2.compareTo(0f)>0) || (y1.compareTo(0f)>0 && y2.compareTo(0f)<0)) {st.replace(6, 7, "-");}
+        }
+
+        // 0 Origin x failsafe
+        if (x1.compareTo(0f)==0) {
+            if (x2.compareTo(0f)<0) {st.insert(0, '-');} // If x1=0, x2=neg
+        }
+        else if (x2.compareTo(0f)==0) {
+            if (x1.compareTo(0f)<0) {st.insert(0, '-');} // if x1=neg, x2=0
+        }
+        else { // if x1,x2!=0
+            if ((x1.compareTo(0f)<0 && x2.compareTo(0f)>0) || (x1.compareTo(0f)>0 && x2.compareTo(0f)<0)) {st.insert(0, '-');}
+        }
+
+        this.Direction = new Formula(String.format(st.toString(), xcoeff, ycoeff));
+        this.Distance = ((Double)Math.sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1))).floatValue(); // measure vector directly between points
     }
 }
 
