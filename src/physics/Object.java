@@ -22,6 +22,38 @@ public class Object {
         this.Position.set(1, this.Position.get(1) + Movement.EquationY.evaluate(time_step).floatValue());
         System.out.println(this.Position);
     }
+
+    public void effect(Object secondary) {
+        Line direct = new Line(this.Position, secondary.Position);
+
+    }
+}
+
+class Line {
+    ArrayList<Float> Start;
+    ArrayList<Float> End;
+    Formula Direction;
+    Float Distance;
+
+    public Line(ArrayList<Float> pos1, ArrayList<Float> pos2) {
+        this.Start = pos1;
+        this.End = pos2;
+        Float x1 = this.Start.get(0);
+        Float y1 = this.Start.get(1);
+        Float x2 = this.End.get(0);
+        Float y2 = this.End.get(1);
+        System.out.println(x1+" "+x2+" ; "+y1+" "+y2);
+
+        float xcoeff = ((Double)Math.sqrt(Math.pow(x1, 2) + Math.pow(x2, 2))).floatValue();
+        float ycoeff = ((Double)Math.sqrt(Math.pow(y1, 2) + Math.pow(y2, 2))).floatValue();
+
+
+        this.Direction = new Formula(String.format("%s%.2fx %s %.2fy%n", ((x1!=0 && x2!=0) && (x1<0 && 0<x2) || (x1>0 && 0>x2))?"-":"",
+                xcoeff, ((y1!=0 && y2!=0) && (y1<0 && 0<y2) || (y1>0 && 0>y2) )?"-":"+", ycoeff)); // TODO: this doesnt work
+        System.out.println(this.Direction.getEquation());
+        
+        this.Distance = ((Double)Math.sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1))).floatValue();
+    }
 }
 
 class Movement {
