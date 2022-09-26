@@ -1,6 +1,7 @@
 package physics;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 
-import java.text.Normalizer;
 import java.util.ArrayList;
 
 // IMPORTANT: LIMITED TO 2D SPACE
@@ -15,22 +16,28 @@ public class Object {
         this.Movement = new Movement(init_mv);
     }
 
-    public void move() {
-        System.out.println(Movement.Equation.getEquation());
-        System.out.println(Movement.Tangent.getEquation());
+    public void move(double time_step) {
+        System.out.println(this.Position);
+        this.Position.set(0, this.Position.get(0) + Movement.EquationX.evaluate(time_step).floatValue());
+        this.Position.set(1, this.Position.get(1) + Movement.EquationY.evaluate(time_step).floatValue());
+        System.out.println(this.Position);
     }
 }
 
 class Movement {
-    Formula Equation;
-    Formula Tangent;
+    Formula EquationX;
+    Formula EquationY;
 
     public Movement(Formula mv) {
-        this.Equation = mv;
-//        new Formula(mv.find_derivative()).evaluate(0.00);
-        this.Tangent = find_tangent(mv, 0.0);
-    }
-    protected Formula find_tangent(Formula mv, Double aval) {
-        return new Formula(String.format("%.2f + %.2f(x%s)", mv.evaluate(aval), new Formula(mv.find_derivative()).evaluate(aval), aval!=0.0?String.format(" - %.2f",aval):""));
+        Matcher matcher = Pattern.compile("(-?[0-9]+\\.[0-9]{2}([xy])) [+-] ([0-9]+\\.[0-9]{2}([xy]))").matcher(mv.getEquation());
+        if (matcher.matches()) {
+            this.EquationX = new Formula(matcher.group(2).equals("x")?matcher.group(1):matcher.group(3));
+            this.EquationY = new Formula(matcher.group(2).equals("y")?matcher.group(1).replace('y','x'):matcher.group(3).replace('y','x'));
+        }
+        else {
+            this.EquationX = new Formula("0.00x");
+            this.EquationY = new Formula("0.00x");
+        }
+
     }
 }
