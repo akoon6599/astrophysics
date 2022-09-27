@@ -9,30 +9,23 @@ public class Object {
     String Title;
     Double Mass;
     ArrayList<Float> Position;
-    Integer Size;
     Movement Movement;
 
     public Object(Formula init_mv) {
         this.Movement = new Movement(init_mv);
+
     }
 
     public void move(double time_step) {
-        System.out.println(this.Position);
         this.Position.set(0, this.Position.get(0) + Movement.EquationX.evaluate(time_step).floatValue());
         this.Position.set(1, this.Position.get(1) + Movement.EquationY.evaluate(time_step).floatValue());
-        System.out.println(this.Position);
-    }
-
-    public void effect(Object secondary) {
-        Line direct = new Line(this.Position, secondary.Position);
-
     }
 }
 
 class Line {
     ArrayList<Float> Start;
     ArrayList<Float> End;
-    Formula Direction;
+    Movement Movement;
     Float Distance;
 
     public Line(ArrayList<Float> pos1, ArrayList<Float> pos2) {
@@ -42,12 +35,9 @@ class Line {
         Float y1 = this.Start.get(1);
         Float x2 = this.End.get(0);
         Float y2 = this.End.get(1);
-        System.out.println(x1+" "+x2+" ; "+y1+" "+y2);
 
         float xcoeff = ((Double)Math.sqrt(Math.pow(x1, 2) + Math.pow(x2, 2))).floatValue();
         float ycoeff = ((Double)Math.sqrt(Math.pow(y1, 2) + Math.pow(y2, 2))).floatValue();
-
-        System.out.println(x1.compareTo(0f));
         StringBuilder st = new StringBuilder("%.2fx + %.2fy");
 
         // 0 Origin y failsafe
@@ -72,7 +62,7 @@ class Line {
             if ((x1.compareTo(0f)<0 && x2.compareTo(0f)>0) || (x1.compareTo(0f)>0 && x2.compareTo(0f)<0)) {st.insert(0, '-');}
         }
 
-        this.Direction = new Formula(String.format(st.toString(), xcoeff, ycoeff));
+        this.Movement = new Movement(new Formula(String.format(st.toString(), xcoeff, ycoeff)));
         this.Distance = ((Double)Math.sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1))).floatValue(); // measure vector directly between points
     }
 }
@@ -89,7 +79,7 @@ class Movement {
         }
         else {
             this.EquationX = new Formula("0.00x");
-            this.EquationY = new Formula("0.00x");
+            this.EquationY = new Formula("0.00y");
         }
 
     }
