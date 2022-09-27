@@ -4,9 +4,9 @@ import java.util.ArrayList;
 
 public class StellarBody extends Object{
     static final Double GravConstant = 6.674*Math.pow(10, -11);
-    String Classification;
-    Double Gravity;
-    Integer Radius;
+    public String Classification;
+    public Double Gravity;
+    public Integer Radius;
 
 
     public StellarBody(Float posx, Float posy, String ttl, String cls, Double mass, Double gravity, Integer radius, Formula init_mv) {

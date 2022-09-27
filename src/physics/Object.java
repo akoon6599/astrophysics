@@ -6,10 +6,10 @@ import java.util.ArrayList;
 
 // IMPORTANT: LIMITED TO 2D SPACE
 public class Object {
-    String Title;
-    Double Mass;
-    ArrayList<Float> Position;
-    Movement Movement;
+    public String Title;
+    public Double Mass;
+    public ArrayList<Float> Position;
+    public Movement Movement;
 
     public Object(Formula init_mv) {
         this.Movement = new Movement(init_mv);
