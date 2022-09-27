@@ -8,6 +8,8 @@ public class StellarBody extends Object{
     public Double Gravity;
     public Integer Radius;
 
+    // aila sucks
+
 
     public StellarBody(Float posx, Float posy, String ttl, String cls, Double mass, Double gravity, Integer radius, Formula init_mv) {
         super(new Formula(init_mv.getEquation()));
