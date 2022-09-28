@@ -37,7 +37,8 @@ public class Global extends JPanel {
         obj.move(TimeScale);
         for (MyShape shape: this.shapes) {
             if (shape.Title.equals(obj.Title)) {
-                shape.translate(obj.Movement.coefficients()[0].intValue(), obj.Movement.coefficients()[1].intValue());
+                Double[] mv = obj.Movement.evaluate(TimeScale);
+                shape.translate(mv[0], mv[1]);
             }
         }
     }
@@ -67,7 +68,7 @@ class MyShape {
         path.append(shape, true);
         this.shape = shape;
     }
-    public void translate(int deltaX, int deltaY) {
+    public void translate(Double deltaX, Double deltaY) {
         path.transform(AffineTransform.getTranslateInstance(deltaX, deltaY));
     }
     public void draw(Graphics2D g2) {g2.draw(path);}

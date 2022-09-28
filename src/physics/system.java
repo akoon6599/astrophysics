@@ -18,8 +18,8 @@ public class system {
 
 //        StellarBody Sun = new StellarBody(0.0f,0.0f, "Sun", "Star", 1.988*Math.pow(10,10),274.0, 695700000, new Formula("0x + 0y"));
 //        StellarBody Earth = new StellarBody(100f,100f,"Earth","Planet",5.972*Math.pow(10,4),9.798, 6378137, new Formula("-4.30x + 3.45y"));
-        Sun = new StellarBody(0f, 0f, "Sun", "Star", 1.0, 1.0, 100, new Formula("0.00x + 0.00y"));
-        StellarBody Earth = new StellarBody(20f, 150f, "Earth", "Planet", 1.0, 1.0, 10, new Formula("10.00x + 0.00y"));
+        Sun = new StellarBody(0f, 0f, "Sun", "Star", 1.0, 1.0, 100, "0.00d", 0.0);
+        StellarBody Earth = new StellarBody(20f, 150f, "Earth", "Planet", 1.0, 1.0, 10, "0.00d", 1.0);
 //        bodies.add(Sun); // TODO: effect mv does not work when only single dimensions are different, find why
         Bodies.add(Earth);
         System.out.println(Arrays.toString(Earth.Movement.coefficients()));
