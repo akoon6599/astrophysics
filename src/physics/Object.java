@@ -9,8 +9,8 @@ public class Object {
     public ArrayList<Float> Position;
     public Movement Movement;
 
-    public Object(Formula init_mv) {
-        this.Movement = new Movement(init_mv);
+    public Object(Formula init_mv, Double mag) {
+        this.Movement = new Movement(init_mv, mag);
 
     }
 
@@ -61,7 +61,7 @@ class Line {
             if ((x1.compareTo(0f)<0 && x2.compareTo(0f)>0) || (x1.compareTo(0f)>0 && x2.compareTo(0f)<0)) {st.insert(0, '-');}
         }
 
-        this.Movement = new Movement(new Formula(String.format(st.toString(), xcoeff, ycoeff)));
+        this.Movement = new Movement(new Formula(String.format(st.toString(), xcoeff, ycoeff)), 1.00);
         this.Distance = ((Double)Math.sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1))).floatValue(); // measure vector directly between points
     }
 }

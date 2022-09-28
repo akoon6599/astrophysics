@@ -6,8 +6,10 @@ import java.util.regex.Pattern;
 public class Movement {
     Formula EquationX;
     Formula EquationY;
+    Double Magnitude;
 
-    public Movement(Formula mv) {
+    public Movement(Formula mv, Double mag) {
+//        System.out.println(mv.getEquation());
         Matcher matcher = Pattern.compile("(-?[0-9]+\\.[0-9]{2}([xy])) ([+-]) ([0-9]+\\.[0-9]{2}([xy]))").matcher(mv.getEquation());
         if (matcher.matches()) {
             this.EquationX = new Formula(matcher.group(2).equals("x") ? matcher.group(1) : matcher.group(4));
@@ -19,6 +21,7 @@ public class Movement {
         if (matcher.group(3).equals("-")) {
             this.EquationY = new Formula("-"+this.EquationY.getEquation());
         }
+        this.Magnitude = mag;
 
     }
 

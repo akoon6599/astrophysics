@@ -4,20 +4,24 @@ import physics.StellarBody;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Path2D;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class Global extends JPanel {
     private static final int PREF_X = 600;
     private static final int PREF_Y = 600;
     ArrayList<Integer> center;
     private ArrayList<MyShape> shapes = new ArrayList<>();
+    public final JPanel Frame;
 
     public Global() {
-        JPanel frame = new JPanel();
-        frame.setLayout(null);
+        this.Frame = new JPanel();
+        this.Frame.setLayout(null);
         this.center = new ArrayList<>();
         this.center.add(PREF_X/2);
         this.center.add(PREF_Y/2);
@@ -25,13 +29,13 @@ public class Global extends JPanel {
 
     public void display_body(StellarBody obj) {
         shapes.add(new MyShape(obj.Title, new Ellipse2D.Float(
-                this.center.get(0)-obj.Position.get(0)-obj.Radius.floatValue(),
-                this.center.get(1)-obj.Position.get(1)-obj.Radius.floatValue(),
+                this.center.get(0)+obj.Position.get(0)-obj.Radius.floatValue(),
+                this.center.get(1)+obj.Position.get(1)-obj.Radius.floatValue(),
                 obj.Radius.floatValue()*2, obj.Radius.floatValue()*2)));
     }
     public void move(StellarBody obj, Double TimeScale) {
         obj.move(TimeScale);
-        for (MyShape shape: shapes) {
+        for (MyShape shape: this.shapes) {
             if (shape.Title.equals(obj.Title)) {
                 shape.translate(obj.Movement.coefficients()[0].intValue(), obj.Movement.coefficients()[1].intValue());
             }
