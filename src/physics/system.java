@@ -18,19 +18,23 @@ public class system {
 
 //        StellarBody Sun = new StellarBody(0.0f,0.0f, "Sun", "Star", 1.988*Math.pow(10,10),274.0, 695700000, new Formula("0x + 0y"));
 //        StellarBody Earth = new StellarBody(100f,100f,"Earth","Planet",5.972*Math.pow(10,4),9.798, 6378137, new Formula("-4.30x + 3.45y"));
-        Sun = new StellarBody(0f, 0f, "Sun", "Star", 1.0, 1.0, 100, "0.00d", 0.0);
-        StellarBody Earth = new StellarBody(20f, 150f, "Earth", "Planet", 1.0, 1.0, 10, "0.00d", 1.0);
-//        bodies.add(Sun); // TODO: effect mv does not work when only single dimensions are different, find why
+        Sun = new StellarBody(0f, 0f, "Sun", "Star", 10000000000.0, 420.0, 100, "0.00d", 1.0);
+        StellarBody Earth = new StellarBody(150f, 150f, "Earth", "Planet", 100000.0, 1.0, 10, "00.00d", 100.0);
+//      TODO: effect mv does not work when only single dimensions are different, find why
         Bodies.add(Earth);
-        System.out.println(Arrays.toString(Earth.Movement.coefficients()));
-        Sun.effect_movement(Earth, TimeScale);
-        System.out.println(Arrays.toString(Earth.Movement.coefficients()));
-
-
+        global.display_body(Earth);
+        global.display_body(Sun);
+        display(global);
+//        System.out.println(Earth.Position);
 //        global.move(Earth, TimeScale);
-//        display(global);
-//        Thread.sleep(1000);
-//        global.Frame.setVisible(false);
+//        System.out.println(Earth.Position);
+        Bodies.add(Earth);
+//        System.out.printf("%s, %f%n", Earth.Movement.Angle, Earth.Movement.Magnitude);
+        Sun.effect_movement(Earth, TimeScale);
+//        System.out.printf("%s, %f%n", Earth.Movement.Angle, Earth.Movement.Magnitude);
+        System.out.println(Earth.Position);
+        global.move(Earth, TimeScale);
+        System.out.println(Earth.Position);
     }
 
     private static void simulate(Global global, int Cycles) {

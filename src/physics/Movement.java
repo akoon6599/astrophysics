@@ -16,13 +16,14 @@ public class Movement {
     }
 
     public Double[] evaluate(Double TimeScale) {
-        Double angle = this.coefficient();
-        this.xMove = Math.cos(angle) / this.Magnitude;
-        this.yMove = Math.sin(angle) / this.Magnitude;
+        double angle = Math.toRadians(this.coefficient());
+        this.xMove = Math.cos(angle) * this.Magnitude;
+        this.yMove = Math.sin(angle) * this.Magnitude;
         return new Double[] {this.xMove*TimeScale, this.yMove* TimeScale};
     }
 
     public Double coefficient() {
-        return Double.parseDouble(this.Angle.replace("d", ""));
+        double rtn = Double.parseDouble(this.Angle.replace("d", ""));
+        return !Double.isNaN(rtn)?rtn:0.00;
     }
 }

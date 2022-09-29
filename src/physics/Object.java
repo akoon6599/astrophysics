@@ -36,7 +36,7 @@ class Line {
         Float y2 = this.End.get(1);
 
         this.Distance = ((Double)Math.sqrt(Math.pow((x2-x1),2) + Math.pow((y2-y1),2))).floatValue(); // measure vector directly between points
-        Double angle = Math.acos((x2-x1) / (this.Distance));
+        Double angle = Math.toDegrees(Math.acos((x1-x2) / (this.Distance)));
         this.Movement = new Movement(String.format("%.2fd", angle), 1.00);
     }
 }
