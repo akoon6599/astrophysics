@@ -18,6 +18,10 @@ public class Movement {
         return new Double[] {this.xMove*TimeScale, this.yMove*TimeScale};
     }
 
+    public void setMagnitude(Double mg) {
+        this.Magnitude = mg;
+    }
+
     public Double coefficient() {
         double rtn = Double.parseDouble(this.Angle.replace("d", ""));
         return !Double.isNaN(rtn)?rtn:0.00;

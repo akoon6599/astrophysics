@@ -25,7 +25,7 @@ class Line {
     ArrayList<Float> Start;
     ArrayList<Float> End;
     Movement Movement;
-    Float Distance;
+    Double Distance;
 
     public Line(ArrayList<Float> pos1, ArrayList<Float> pos2) {
         this.Start = pos1;
@@ -35,9 +35,10 @@ class Line {
         Float x2 = this.End.get(0);
         Float y2 = this.End.get(1);
 
-        this.Distance = ((Double)Math.sqrt(Math.pow((x2-x1),2) + Math.pow((y2-y1),2))).floatValue(); // measure vector directly between points
+        this.Distance = Math.sqrt(Math.pow((x1-x2),2) + Math.pow((y1-y2),2)); // measure vector directly between points
+        System.out.println(Math.atan((x1-x2) / (this.Distance)));
         Double angle = Math.toDegrees(Math.acos((x1-x2) / (this.Distance)));
-        this.Movement = new Movement(String.format("%.2fd", angle), 1.00);
+        this.Movement = new Movement(String.format("%.2fd", angle), 0.00);
     }
 }
 

@@ -3,6 +3,8 @@ package physics;
 import display.Global;
 import javax.swing.*;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 
 public class system {
@@ -12,39 +14,51 @@ public class system {
     static StellarBody Sun;
 
     public static void main(String[] args) throws InterruptedException {
-        Global global = new Global();
         Bodies = new ArrayList<>();
-
-//        StellarBody Sun = new StellarBody(0.0f,0.0f, "Sun", "Star", 1.988*Math.pow(10,10),274.0, 695700000, new Formula("0x + 0y"));
-//        StellarBody Earth = new StellarBody(100f,100f,"Earth","Planet",5.972*Math.pow(10,4),9.798, 6378137, new Formula("-4.30x + 3.45y"));
-        Sun = new StellarBody(0f, 0f, "Sun", "Star", 2*Math.pow(10,11), 120.0, 100, "0.00d", 1.0);
-        StellarBody Moon = new StellarBody(-140f, -195f, "Body1", "Planet", 2*Math.pow(10,7), 1.0, 50,"70.00d", 3.00);
-        StellarBody Earth = new StellarBody(80f, 150f, "Earth", "Planet", 2*Math.pow(10,5), 1.0, 10, "180.00d", 1.00);
-//        StellarBody Test = new StellarBody(291f, 240f, "t1", "t1", 1.0, 1.0, 100, "0.00d", 1.0);
-//      TODO: effect mv does not work when only single dimensions are different, find why
+        Sun = new StellarBody(0.0f,0.0f, "Sun", "Star", 1.988*Math.pow(10,11), 100, "0.00d", 0.0);
+        StellarBody Earth = new StellarBody(200f,0f,"Earth","Planet",5.972*Math.pow(10,4), 25, "270.00d", 100.0);
+        StellarBody Moon = new StellarBody(-140f, -230f, "Body1", "Planet", 2.53*Math.pow(10,4), 45, "10.00d", 70.0);
+//        Sun = new StellarBody(0f, 0f, "Sun", "Star", 2*Math.pow(10,11), 100, "0.00d", 1.0);
+//        StellarBody Moon = new StellarBody(-160f, -195f, "Body1", "Planet", 2*Math.pow(10,7), 50, "90.00d", 12.00);
+//        StellarBody Earth = new StellarBody(80f, 150f, "Earth", "Planet", 2*Math.pow(10,5), 10, "180.00d", 10.00);
+//     TODO: effect mv does not work when only single dimensions are different, find why
+        // TODO : THE MV EFFECT NEVER GETS NEGATIVE THATS ONE OF THE BIG PROBLEMS IM GENIUS
         Bodies.add(Earth);
         Bodies.add(Moon);
+
+        Global global = new Global(Bodies);
         global.display_body(Earth);
         global.display_body(Moon);
 //        global.display_body(Test);
 
         global.display_body(Sun);
         display(global);
-        simulate(global, 20);
-        System.out.println("end");
+        simulate(global, 5);
     }
 
     private static void simulate(Global global, int Cycles) throws InterruptedException {
-        for (int currentCycle = 0; currentCycle <= Cycles; currentCycle++) {
+        Thread.sleep(1000); // give screen a chance to open before starting sim
+        Instant start = Instant.now();
+        for (int currentCycle = 1; currentCycle <= Cycles; currentCycle++) {
+            System.out.printf("%n%nHow Many Shapes Exist? : %s%n%n", global.Shapes.size());
+            Instant startCycle = Instant.now();
             for (StellarBody body : Bodies) {
+                Sun.effect_movement(body, TimeScale, DistScale);
                 global.move(body, TimeScale);
                 global.display_body(body);
             }
 
             global.collision(Bodies, Sun);
             global.refresh();
-            Thread.sleep(500);
+            Thread.sleep(400);
+            Instant endCycle = Instant.now();
+            System.out.printf("%nCycle End: %s milliseconds%n%n", Duration.between(startCycle, endCycle).toMillis());
         }
+        Instant end = Instant.now();
+        System.out.printf("Simulation End: %s seconds%n", Duration.between(start, end).toMillis()/1000.0);
+        // Initiate drawing historical paths for all objects
+        global.SimComplete = true;
+        global.refresh();
     }
 
     private static void display(Global global) {
