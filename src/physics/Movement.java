@@ -1,9 +1,5 @@
 package physics;
 
-import java.sql.Time;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 public class Movement {
     String Angle;
     Double Magnitude;
@@ -19,7 +15,7 @@ public class Movement {
         double angle = Math.toRadians(this.coefficient());
         this.xMove = Math.cos(angle) * this.Magnitude;
         this.yMove = Math.sin(angle) * this.Magnitude;
-        return new Double[] {this.xMove*TimeScale, this.yMove* TimeScale};
+        return new Double[] {this.xMove*TimeScale, this.yMove*TimeScale};
     }
 
     public Double coefficient() {

@@ -1,7 +1,6 @@
 package physics;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 
 public class StellarBody extends Object{
     static final Double GravConstant = 6.674*Math.pow(10, -11);
@@ -31,10 +30,10 @@ public class StellarBody extends Object{
         double gMagnitude = GravConstant * ((this.Mass * obj.Mass)/Math.pow(radius, 2));
         // --- Find Angle Between
         double angleDif = gDirection.Movement.coefficient() - obj.Movement.coefficient();
-        double angleEffect = 0.00;
+        double angleEffect;
         Double[] magnitude;
-        double nxMagnitude = 0;
-        double nyMagnitude = 0;
+        double nxMagnitude;
+        double nyMagnitude;
         double nMagnitude = 0;
         double newAngle = 0;
         if (Math.abs(angleDif) < 360 && Math.abs(angleDif) > 180) { // split it based on the hemisphere for Y
@@ -86,9 +85,7 @@ public class StellarBody extends Object{
             newAngle = obj.Movement.coefficient();
         }
 
-        System.out.println("b");
         System.out.println(newAngle);
-        System.out.printf("%f, %f%n", obj.Movement.Magnitude, gMagnitude);
         obj.Movement = new Movement(String.format("%.2fd", newAngle), nMagnitude);
 
     }
