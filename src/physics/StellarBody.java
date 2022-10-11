@@ -1,16 +1,18 @@
 package physics;
 
+import java.awt.Color;
 import java.util.ArrayList;
 
 public class StellarBody extends Object{
     static final Double GravConstant = 6.674*Math.pow(10, -11);
     public String Classification;
     public Integer Radius;
+    public Color COLOR;
 
     // aila sucks
 
 
-    public StellarBody(Float posx, Float posy, String ttl, String cls, Double mass, Integer radius, String angle, Double mag) {
+    public StellarBody(Float posx, Float posy, String ttl, String cls, Double mass, Integer radius, String angle, Double mag, Color color) {
         super(angle, mag);
         this.Classification = cls;
         ArrayList<Float> pos = new ArrayList<>();
@@ -20,15 +22,12 @@ public class StellarBody extends Object{
         this.Title = ttl;
         this.Mass = mass;
         this.Radius = radius;
+        this.COLOR = color;
     }
 
     public void effect_movement(StellarBody obj, Double TimeScale, Double DistanceScale) { // Called by main body, passes orbiter
-        System.out.printf("Main Body: %s - Secondary Body: %s%n", this.Title, obj.Title);
         Line gDirection = new Line(this, obj);
-        double gMagnitude = GravConstant * ((this.Mass * obj.Mass) / Math.pow(gDirection.Distance*DistanceScale,2)) * TimeScale;
-//        if (this.Title.equals("Sun")) {
-        System.out.printf("Gravity: %.2f,%.12f%n", gDirection.Distance, gMagnitude);
-//        }
+        double gMagnitude = GravConstant * ((this.Mass * obj.Mass) / Math.pow(gDirection.Distance*(this.Title.equals("Sun")?DistanceScale:DistanceScale*0.25),2)) * TimeScale;
 
         double gxMagnitude = gMagnitude * Math.cos(Math.toRadians(gDirection.Movement.coefficient()));
         double gyMagnitude = gMagnitude * Math.sin(Math.toRadians(gDirection.Movement.coefficient()));
@@ -52,7 +51,7 @@ public class StellarBody extends Object{
         obj.Movement = new Movement(String.format("%.2fd", newAngle), nMagnitude);
     }
 
-    public void find_orbit(StellarBody obj, Double TimeScale, Double DistanceScale) { // Called by main body, passes orbiter
+    public void find_orbit(StellarBody obj, Double TimeScale, Double DistanceScale) { // Called by main body, passes orbiter - requires a relative 90-degree angle between orbiter motion and main body
         Line Tether = new Line(this, obj);
         double gMagnitude = GravConstant * ((this.Mass * obj.Mass) / Math.pow(Tether.Distance*DistanceScale,2)) * TimeScale;
         double rV = Math.sqrt(gMagnitude*Tether.Distance);

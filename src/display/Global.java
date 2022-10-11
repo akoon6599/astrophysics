@@ -7,7 +7,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Objects;
 
@@ -17,21 +16,22 @@ public class Global extends JPanel {
     public ArrayList<MyShape> Shapes = new ArrayList<>();
     private final JPanel Frame;
     public boolean SimComplete = false;
-    private ArrayList<StellarBody> Bodies;
+    private final ArrayList<StellarBody> Bodies;
     protected Graphics2D g2;
 
 
-    public Global(ArrayList<StellarBody> bdy) {
+    public Global(ArrayList<StellarBody> bodies) {
         this.Frame = new JPanel();
-        this.Bodies = bdy;
+        this.Bodies = bodies;
         this.Frame.setLayout(null);
+        this.Bodies.forEach(this::display_body);
     }
 
     public void display_body(StellarBody obj) {
         MyShape newShape = new MyShape(obj.Title, new Ellipse2D.Float( // Create a new shape, missing history and flags
                 PREF_X / 2f + obj.Position.get(0) - obj.Radius.floatValue(),
                 PREF_Y / 2f + obj.Position.get(1) - obj.Radius.floatValue(),
-                obj.Radius.floatValue() * 2, obj.Radius.floatValue() * 2));
+                obj.Radius.floatValue() * 2, obj.Radius.floatValue() * 2), obj.COLOR);
         if (Shapes.isEmpty()) {Shapes.add(newShape);} // Most likely this will be the sun
         boolean Found = false;
         ArrayList<MyShape> tmpShapes = (ArrayList<MyShape>) Shapes.clone(); // Duplicated Shapes so that we can iterate + edit
@@ -96,7 +96,6 @@ public class Global extends JPanel {
                         StellarBody mainBody = null;
                         StellarBody secondaryBody = null;
                         for (StellarBody body : bodies) {
-                            System.out.println(body.Title);
                             if (body.Title.equals(obj.Title)) {mainBody = body;}
                             else if (obj.Title.equals("Sun")) {mainBody = Sun;}
                             if (body.Title.equals(shape.Title)) {secondaryBody = body;}
@@ -106,11 +105,17 @@ public class Global extends JPanel {
                             shape.isCollided = true;
                             mainBody.Mass += secondaryBody.Mass;
                             secondaryBody.Movement.setMagnitude(0.0);
+                            obj.PositionHistory.add(new double[] {
+                                    obj.PosX+obj.Shape.getBounds().width/2.0, obj.PosY+obj.Shape.getBounds().width/2.0, 1
+                            });
                         }
                         else if (mainBody.Mass < secondaryBody.Mass) {
                             obj.isCollided = true;
                             secondaryBody.Mass += mainBody.Mass;
                             mainBody.Movement.setMagnitude(0.0);
+                            shape.PositionHistory.add(new double[] {
+                                    shape.PosX+shape.Shape.getBounds().width/2.0, shape.PosY+shape.Shape.getBounds().width/2.0, 1
+                            });
                         }
                     }
                     Check.add(String.format("%s->%s", obj.Title, shape.Title));
@@ -146,7 +151,7 @@ public class Global extends JPanel {
             if (!obj.Title.equals("Sun") && !shape.Title.equals("Sun")) {
                 if (shape.Title.equals(obj.Title)) {
                     Iterator<double[]> it = shape.PositionHistory.iterator();
-                    double[] prevPosition = {0.0, 0.0};
+                    double[] prevPosition = {0.0, 0.0, 0};
                     double[] curPosition;
                     if (it.hasNext()) {
                         prevPosition = it.next();
@@ -155,7 +160,7 @@ public class Global extends JPanel {
                     while (it.hasNext()) {
                         curPosition = it.next();
 
-                        g2.setColor(Color.RED);
+                        g2.setColor(obj.COLOR);
                         this.line(prevPosition, curPosition);
                         if (i%10 == 0) { // Only draws an arrow every 5 steps
                             Line change = new Line(curPosition, prevPosition); // Create direction arrows for history path
@@ -169,6 +174,11 @@ public class Global extends JPanel {
                                     curPosition[0] + leftXLength, curPosition[1] + leftYLength});
                             this.line(curPosition, new double[]{
                                     curPosition[0] + rightXLength, curPosition[1] + rightYLength});
+                        }
+
+                        g2.setColor(Color.GREEN);
+                        if (curPosition[2] == 1) {
+                            g2.fillRoundRect((int)curPosition[0]-5, (int)curPosition[1]-5, 10,10, 6, 6);
                         }
                         i++;
                         prevPosition = curPosition;
@@ -191,22 +201,24 @@ class MyShape {
     public double PosY;
     public boolean isCollided = false;
     public ArrayList<double[]> PositionHistory = new ArrayList<>();
+    public Color COLOR;
 
-    public MyShape(String name, Shape shape){
+    public MyShape(String name, Shape shape, Color color){
         this.Title = name;
         path.append(shape, true);
         this.Shape = shape;
         this.PosX = shape.getBounds().getMinX();
         this.PosY = shape.getBounds().getMinY();
+        this.COLOR = color;
         this.PositionHistory.add(new double[]
-                {this.PosX+this.Shape.getBounds().width/2.0, this.PosY+this.Shape.getBounds().width/2.0});
+                {this.PosX+this.Shape.getBounds().width/2.0, this.PosY+this.Shape.getBounds().width/2.0,0});
     }
     public void translate(Double deltaX, Double deltaY) {
         path.transform(AffineTransform.getTranslateInstance(deltaX, deltaY));
         this.PosX += deltaX;
         this.PosY += deltaY;
         this.PositionHistory.add(new double[]
-                {this.PosX+this.Shape.getBounds().width/2.0, this.PosY+this.Shape.getBounds().width/2.0});
+                {this.PosX+this.Shape.getBounds().width/2.0, this.PosY+this.Shape.getBounds().width/2.0,0});
     }
     public void draw(Graphics2D g2, boolean isFinal) {
         if (!isFinal) {
@@ -229,7 +241,7 @@ class MyShape {
     }
     public void fill(Graphics2D g2) {
         if (!this.isCollided) {
-            g2.setColor(Color.DARK_GRAY);
+            g2.setColor(COLOR);
             g2.fill(path);
         }
     }

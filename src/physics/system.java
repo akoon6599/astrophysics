@@ -3,37 +3,36 @@ package physics;
 import display.Global;
 import javax.swing.*;
 
+import java.awt.*;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 
 public class system {
     static final Double TimeScale = 1.00;
-    static final Double DistScale = 10.00;
-    static final long CycleDelay = 50; // Milliseconds
+    static final Double DistScale = 0.05;
+    static final long CycleDelay = 20; // Milliseconds
     static ArrayList<StellarBody> Bodies;
     static StellarBody Sun;
 
     public static void main(String[] args) throws InterruptedException { // TODO: modulate the addition of bodies
         Bodies = new ArrayList<>();
-        Sun = new StellarBody(0.0f,0.0f, "Sun", "Star", 1.988*Math.pow(10,12), 100, "0.00d", 0.0);
-        StellarBody Earth = new StellarBody(200f,0f,"Earth","Planet",1.2*Math.pow(10,5), 25, "270.00d", 20.0);
-//        StellarBody Moon = new StellarBody(-140f, -230f, "Body1", "Planet", 2.53*Math.pow(10,4), 45, "10.00d", 15.0);
-//        Sun = new StellarBody(0f, 0f, "Sun", "Star", 2*Math.pow(10,11), 100, "0.00d", 1.0);
-        StellarBody Moon = new StellarBody(-160f, -195f, "Body1", "Planet", 2*Math.pow(10,5), 50, "310.00d", 12.00);
-//        StellarBody Earth = new StellarBody(80f, 150f, "Earth", "Planet", 2*Math.pow(10,5), 10, "180.00d", 10.00);
+        Sun = new StellarBody(0.0f,0.0f, "Sun", "Star", 1.988*Math.pow(10,7), 100, "0.00d", 0.0, Color.GRAY.darker());
+        StellarBody Earth = new StellarBody(250f,0f,"Earth","Planet",1.2*Math.pow(10,5), 25, "90.00d", 0.0, Color.GREEN.darker());
+        StellarBody Moon = new StellarBody(-400f, 0f, "Body1", "Planet", 2*Math.pow(10,4), 50, "270.00d", 6.20, Color.RED);
+
         Bodies.add(Earth);
         Sun.find_orbit(Earth, TimeScale, DistScale);
+//        Sun.find_orbit(Moon, TimeScale, DistScale);
         Bodies.add(Moon);
-        // gravity still forces bodies to only move counter-clockwise, regardless of actual movement
+//        Bodies.add(Comet);
+
         Global global = new Global(Bodies);
-        global.display_body(Earth);
-        global.display_body(Moon);
-//        global.display_body(Test);
+
 
         global.display_body(Sun);
         display(global);
-        simulate(global, 50);
+        simulate(global, 300);
     }
 
     private static void simulate(Global global, int Cycles) throws InterruptedException {
@@ -42,15 +41,13 @@ public class system {
         for (int currentCycle = 1; currentCycle <= Cycles; currentCycle++) {
             System.out.printf("%n%nHow Many Shapes Exist? : %s%n%n", global.Shapes.size());
             Instant startCycle = Instant.now();
-            for (StellarBody body : Bodies) { // Sun effects each body then moves it - TODO: refactor to all-body effects
-//                Bodies.forEach(item -> {if (!item.Title.equals(body.Title)) // i hate lambdas
-//                        {
-//                            System.out.println(item.Movement.Magnitude);
-//                            item.effect_movement(body, TimeScale, DistScale);
-//                            System.out.println(item.Movement.Magnitude);
-//                        }
-//                });
-                Sun.effect_movement(body, TimeScale, DistScale);
+            for (StellarBody body : Bodies) {
+                Bodies.forEach(item -> {if (!item.Title.equals(body.Title)) // i hate lambdas
+                        {
+                            item.effect_movement(body, TimeScale, DistScale); // Each body effects every other body
+                        }
+                });
+                Sun.effect_movement(body, TimeScale, DistScale); // then the Sun effects every body
                 global.move(body, TimeScale);
                 global.display_body(body);
             }
@@ -59,7 +56,7 @@ public class system {
             global.refresh(); // Repaint screen
             Thread.sleep(CycleDelay);
             Instant endCycle = Instant.now();
-            System.out.printf("%nCycle End: %s milliseconds%n%n", Duration.between(startCycle, endCycle).toMillis());
+            System.out.printf("%nCycle %s End: %s milliseconds%n%n", currentCycle, Duration.between(startCycle, endCycle).toMillis());
         }
         Instant end = Instant.now();
         System.out.printf("Simulation End: %s seconds%n", Duration.between(start, end).toMillis()/1000.0);
