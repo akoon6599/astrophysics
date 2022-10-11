@@ -1,5 +1,6 @@
 package display;
 
+import physics.Line;
 import physics.StellarBody;
 
 import javax.swing.*;
@@ -11,12 +12,13 @@ import java.util.Iterator;
 import java.util.Objects;
 
 public class Global extends JPanel {
-    protected static final int PREF_X = 600;
-    protected static final int PREF_Y = 600;
+    protected static final int PREF_X = 1440;
+    protected static final int PREF_Y = 1080;
     public ArrayList<MyShape> Shapes = new ArrayList<>();
     private final JPanel Frame;
     public boolean SimComplete = false;
     private ArrayList<StellarBody> Bodies;
+    protected Graphics2D g2;
 
 
     public Global(ArrayList<StellarBody> bdy) {
@@ -59,13 +61,14 @@ public class Global extends JPanel {
             }
         }
     }
-    public void collision(ArrayList<StellarBody> bodies, StellarBody Sun) {
+    public void collision(ArrayList<StellarBody> bodies, StellarBody Sun) { // Goes through `bodies` and checks each for a collision - Sun is passed due to not being in `bodies`
         ArrayList<String> Check = new ArrayList<>();
         for (MyShape obj : this.Shapes) {
             for (MyShape shape : this.Shapes) {
                 if (!Objects.equals(shape.Title, obj.Title) &&
-                        !(Check.contains(String.format("%s->%s", shape.Title, obj.Title))) ||
-                        Check.contains(String.format("%s->%s", obj.Title, shape.Title))) {
+                        !(Check.contains(String.format("%s->%s", shape.Title, obj.Title)) ||
+                        Check.contains(String.format("%s->%s", obj.Title, shape.Title))) &&
+                        (!shape.isCollided && !obj.isCollided)) {
                     AffineTransform at = new AffineTransform();
 
                     GeneralPath pathObj = new GeneralPath();
@@ -93,6 +96,7 @@ public class Global extends JPanel {
                         StellarBody mainBody = null;
                         StellarBody secondaryBody = null;
                         for (StellarBody body : bodies) {
+                            System.out.println(body.Title);
                             if (body.Title.equals(obj.Title)) {mainBody = body;}
                             else if (obj.Title.equals("Sun")) {mainBody = Sun;}
                             if (body.Title.equals(shape.Title)) {secondaryBody = body;}
@@ -118,14 +122,14 @@ public class Global extends JPanel {
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         super.setBackground(Color.WHITE);
-        Graphics2D g2 = (Graphics2D) g;
-        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        this.g2 = (Graphics2D) g;
+        this.g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         for (MyShape shape : Shapes) {
-            shape.draw(g2, false);
+            shape.draw(this.g2, false);
         }
         if (this.SimComplete) {
             for (StellarBody body : this.Bodies) {
-                this.drawHistory(g2, body);
+                this.drawHistory(this.g2, body);
             }
         }
     }
@@ -143,14 +147,30 @@ public class Global extends JPanel {
                 if (shape.Title.equals(obj.Title)) {
                     Iterator<double[]> it = shape.PositionHistory.iterator();
                     double[] prevPosition = {0.0, 0.0};
-                    double[] curPosition = {0.0, 0.0};
+                    double[] curPosition;
                     if (it.hasNext()) {
                         prevPosition = it.next();
                     }
+                    int i = 0;
                     while (it.hasNext()) {
                         curPosition = it.next();
+
                         g2.setColor(Color.RED);
-                        this.line(g2, prevPosition, curPosition);
+                        this.line(prevPosition, curPosition);
+                        if (i%10 == 0) { // Only draws an arrow every 5 steps
+                            Line change = new Line(curPosition, prevPosition); // Create direction arrows for history path
+                            double leftWingAngle = change.Movement.coefficient() + 30;
+                            double rightWingAngle = change.Movement.coefficient() - 30;
+                            double leftXLength = 10 * Math.cos(Math.toRadians(leftWingAngle));
+                            double leftYLength = 10 * Math.sin(Math.toRadians(leftWingAngle));
+                            double rightXLength = 10 * Math.cos(Math.toRadians(rightWingAngle));
+                            double rightYLength = 10 * Math.sin(Math.toRadians(rightWingAngle));
+                            this.line(curPosition, new double[]{
+                                    curPosition[0] + leftXLength, curPosition[1] + leftYLength});
+                            this.line(curPosition, new double[]{
+                                    curPosition[0] + rightXLength, curPosition[1] + rightYLength});
+                        }
+                        i++;
                         prevPosition = curPosition;
                     }
                 }
@@ -158,8 +178,8 @@ public class Global extends JPanel {
             shape.draw(g2, true);
         }
     }
-    public void line(Graphics2D g2, double[] Start, double[] End) {
-        g2.drawLine((int)Start[0],(int)Start[1], (int)End[0],(int)End[1]);
+    public void line(double[] Start, double[] End) {
+        this.g2.drawLine((int)Start[0],(int)Start[1], (int)End[0],(int)End[1]);
     }
 }
 
@@ -178,10 +198,6 @@ class MyShape {
         this.Shape = shape;
         this.PosX = shape.getBounds().getMinX();
         this.PosY = shape.getBounds().getMinY();
-//        double disCorner = 0.5*(this.Shape.getBounds().width/2.0*Math.sqrt(2.0) - this.Shape.getBounds().width/2.0); // find distance from origin of shape to perimeter
-//        this.PositionHistory.add(new double[]
-//                {this.PosX+(disCorner*Math.cos(Math.toRadians(45.0))),
-//                        this.PosY+(disCorner*Math.sin(Math.toRadians(45.0)))});
         this.PositionHistory.add(new double[]
                 {this.PosX+this.Shape.getBounds().width/2.0, this.PosY+this.Shape.getBounds().width/2.0});
     }
@@ -189,14 +205,8 @@ class MyShape {
         path.transform(AffineTransform.getTranslateInstance(deltaX, deltaY));
         this.PosX += deltaX;
         this.PosY += deltaY;
-//        double disCorner = 0.5*(this.Shape.getBounds().width*Math.sqrt(2.0) - this.Shape.getBounds().width);
-//        this.PositionHistory.add(new double[]
-//                {this.PosX+(disCorner*Math.cos(Math.toRadians(45.0))),
-//                        this.PosY+(disCorner*Math.sin(Math.toRadians(45.0)))});
         this.PositionHistory.add(new double[]
                 {this.PosX+this.Shape.getBounds().width/2.0, this.PosY+this.Shape.getBounds().width/2.0});
-        if (this.Title.equals("Body1")) {
-        }
     }
     public void draw(Graphics2D g2, boolean isFinal) {
         if (!isFinal) {
