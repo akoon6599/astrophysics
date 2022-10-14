@@ -25,6 +25,7 @@ public class Global extends JPanel {
         this.Bodies = bodies;
         this.Frame.setLayout(null);
         this.Bodies.forEach(this::display_body);
+//        Start st = new Start();
     }
 
     public void display_body(StellarBody obj) {
@@ -144,8 +145,8 @@ public class Global extends JPanel {
         return new Dimension(PREF_X, PREF_Y);
     }
     public void refresh() { // refreshes the canvas in real-time. god this took me ages to find the solution to
-        EventQueue.invokeLater(this::repaint); // I have literally 0 clue what this syntax does in this context
-    }   // IDEA just wouldn't shut up about it, so I listened
+        EventQueue.invokeLater(this::repaint);
+    }
     public void drawHistory(Graphics2D g2, StellarBody obj) {
         for (MyShape shape : this.Shapes) {
             if (!obj.Title.equals("Sun") && !shape.Title.equals("Sun")) {

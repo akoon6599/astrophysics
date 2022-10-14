@@ -1,6 +1,8 @@
 package physics;
 
 import display.Global;
+import display.Start;
+
 import javax.swing.*;
 
 import java.awt.*;
@@ -20,19 +22,26 @@ public class system {
         Sun = new StellarBody(0.0f,0.0f, "Sun", "Star", 1.988*Math.pow(10,7), 100, "0.00d", 0.0, Color.GRAY.darker());
         StellarBody Earth = new StellarBody(250f,0f,"Earth","Planet",1.2*Math.pow(10,5), 25, "90.00d", 0.0, Color.GREEN.darker());
         StellarBody Moon = new StellarBody(-400f, 0f, "Body1", "Planet", 2*Math.pow(10,4), 50, "270.00d", 6.20, Color.RED);
+        StellarBody Test = new StellarBody(-400f, 0f, "Body2", "Planet", 2*Math.pow(10,4), 50, "270.00d", 6.20, Color.RED);
+        StellarBody Test2 = new StellarBody(-400f, 0f, "Body3", "Planet", 2*Math.pow(10,4), 50, "270.00d", 6.20, Color.RED);
+        StellarBody Test3 = new StellarBody(-400f, 0f, "Body4", "Planet", 2*Math.pow(10,4), 50, "270.00d", 6.20, Color.RED);
 
         Bodies.add(Earth);
+        Bodies.add(Test);
+        Bodies.add(Test2);
+        Bodies.add(Test3);
         Sun.find_orbit(Earth, TimeScale, DistScale);
 //        Sun.find_orbit(Moon, TimeScale, DistScale);
         Bodies.add(Moon);
 //        Bodies.add(Comet);
 
-        Global global = new Global(Bodies);
+//        Global global = new Global(Bodies);
 
 
-        global.display_body(Sun);
-        display(global);
-        simulate(global, 300);
+//        global.display_body(Sun);
+        display(new Start(Bodies));
+//        display(global);
+//        simulate(global, 1);
     }
 
     private static void simulate(Global global, int Cycles) throws InterruptedException {
@@ -66,11 +75,22 @@ public class system {
     }
 
     private static void display(Global global) {
-        JFrame frame = new JFrame("Physics Simulator");
-        frame.getContentPane().add(global);
-        frame.pack();
-        frame.setLocationRelativeTo(null);
-        frame.setVisible(true);
+        java.awt.EventQueue.invokeLater(() -> {
+            JFrame frame = new JFrame("Physics Simulator");
+            frame.getContentPane().add(global);
+            frame.pack();
+            frame.setLocationRelativeTo(null);
+            frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+            frame.setVisible(true);
+        });
+    }
+    private static void display(Start start) {
+        java.awt.EventQueue.invokeLater(() -> {
+            start.pack();
+            start.setLocationRelativeTo(null);
+            start.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+            start.setVisible(true);
+        });
     }
 }
 
