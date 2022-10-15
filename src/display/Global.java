@@ -7,6 +7,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Objects;
 
@@ -49,7 +50,6 @@ public class Global extends JPanel {
         if (!Found) {
             Shapes.add(newShape);
         }
-
     }
     public void move(StellarBody obj, Double TimeScale) {
         for (MyShape shape: this.Shapes) {
@@ -126,6 +126,7 @@ public class Global extends JPanel {
     }
     @Override
     protected void paintComponent(Graphics g) {
+        System.out.println("b");
         super.paintComponent(g);
         super.setBackground(Color.WHITE);
         this.g2 = (Graphics2D) g;
