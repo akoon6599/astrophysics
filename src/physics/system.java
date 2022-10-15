@@ -13,40 +13,60 @@ import java.util.ArrayList;
 public class system {
     static final Double TimeScale = 1.00;
     static final Double DistScale = 0.05;
-    static final long CycleDelay = 20; // Milliseconds
-    static ArrayList<StellarBody> Bodies;
+    static final long CycleDelay = 500; // Milliseconds
+    static ArrayList<StellarBody> Bodies = new ArrayList<>();
     static StellarBody Sun;
+    static Global GLOBAL;
 
     public static void main(String[] args) throws InterruptedException { // TODO: modulate the addition of bodies
-        Bodies = new ArrayList<>();
         Sun = new StellarBody(0.0f,0.0f, "Sun", "Star", 1.988*Math.pow(10,7), 100, "0.00d", 0.0, Color.GRAY.darker());
         StellarBody Earth = new StellarBody(250f,0f,"Earth","Planet",1.2*Math.pow(10,5), 25, "90.00d", 0.0, Color.GREEN.darker());
-        StellarBody Moon = new StellarBody(-400f, 0f, "Body1", "Planet", 2*Math.pow(10,4), 50, "270.00d", 6.20, Color.RED);
-        StellarBody Test = new StellarBody(-400f, 0f, "Body2", "Planet", 2*Math.pow(10,4), 50, "270.00d", 6.20, Color.RED);
-        StellarBody Test2 = new StellarBody(-400f, 0f, "Body3", "Planet", 2*Math.pow(10,4), 50, "270.00d", 6.20, Color.RED);
-        StellarBody Test3 = new StellarBody(-400f, 0f, "Body4", "Planet", 2*Math.pow(10,4), 50, "270.00d", 6.20, Color.RED);
-
+//        StellarBody Moon = new StellarBody(-400f, 0f, "Body1", "Planet", 2*Math.pow(10,4), 50, "270.00d", 6.20, Color.RED);
+//        StellarBody Test = new StellarBody(-400f, 0f, "Body2", "Planet", 2*Math.pow(10,4), 50, "270.00d", 6.20, Color.RED);
+//        StellarBody Test2 = new StellarBody(-400f, 0f, "Body3", "Planet", 2*Math.pow(10,4), 50, "270.00d", 6.20, Color.RED);
+//        StellarBody Test3 = new StellarBody(-400f, 0f, "Body4", "Planet", 2*Math.pow(10,4), 50, "270.00d", 6.20, Color.RED);
+//
         Bodies.add(Earth);
-        Bodies.add(Test);
-        Bodies.add(Test2);
-        Bodies.add(Test3);
-        Sun.find_orbit(Earth, TimeScale, DistScale);
-//        Sun.find_orbit(Moon, TimeScale, DistScale);
-        Bodies.add(Moon);
-//        Bodies.add(Comet);
-
-//        Global global = new Global(Bodies);
+//        Bodies.add(Test);
+//        Bodies.add(Test2);
+//        Bodies.add(Test3);
+//        Sun.find_orbit(Earth, TimeScale, DistScale);
+////        Sun.find_orbit(Moon, TimeScale, DistScale);
+//        Bodies.add(Moon);
+////        Bodies.add(Comet);
 
 
-//        global.display_body(Sun);
         display(new Start(Bodies));
-//        display(global);
-//        simulate(global, 1);
-    }
 
+//        GLOBAL = new Global(Bodies);
+//        GLOBAL.display_body(Sun);
+//        display(GLOBAL);
+//        simulate(GLOBAL, 10);
+    }
+    public static void start_simulation(ArrayList<StellarBody> newBodies, int Cycles, Start start) throws InterruptedException {
+        Bodies = newBodies;
+        GLOBAL = new Global(Bodies);
+        GLOBAL.display_body(Sun);
+        display(GLOBAL);
+        simulate(GLOBAL, Cycles);
+        /*
+        So, the problem here is that paintComponent SEEMS to only work+run if it's referring to the main frame - ie the
+        object that started the gui display. The thing is, that's NOT the case in this instance. Start() is what begins
+        the GUI, and so paintComponent never runs - never drawing the planets at all until the history is given, which
+        only displays because it works through an entirely different concept than paintComponent.
+        I can see there being 4 solutions:
+        1) Merge Start() and Global() so that its just separate systems of the same class, both using paintComponent
+        2) Rewrite Start() to use paintComponent, MIGHT fix issue but im not sure
+        3) Change system so that Global() is the initiator but does not get enabled until Start() is done
+        4) Rewrite Global() to not use paintComponent, may or may not be possible
+        From what I can see right now, option 4 seems to be the most sane option while preserving the most of my
+        previous work. Strongly consider 3, however, no guarantee that that will even solve the issue.
+         */
+    }
     private static void simulate(Global global, int Cycles) throws InterruptedException {
         Thread.sleep(1000); // give screen a chance to open before starting sim
         Instant start = Instant.now();
+        global.display_body(Sun);
         for (int currentCycle = 1; currentCycle <= Cycles; currentCycle++) {
             System.out.printf("%n%nHow Many Shapes Exist? : %s%n%n", global.Shapes.size());
             Instant startCycle = Instant.now();
@@ -75,14 +95,14 @@ public class system {
     }
 
     private static void display(Global global) {
-        java.awt.EventQueue.invokeLater(() -> {
+//        java.awt.EventQueue.invokeLater(() -> {
             JFrame frame = new JFrame("Physics Simulator");
             frame.getContentPane().add(global);
             frame.pack();
             frame.setLocationRelativeTo(null);
             frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
             frame.setVisible(true);
-        });
+//        });
     }
     private static void display(Start start) {
         java.awt.EventQueue.invokeLater(() -> {
