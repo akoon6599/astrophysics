@@ -7,7 +7,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Objects;
 
@@ -15,18 +14,25 @@ public class Global extends JPanel {
     protected static final int PREF_X = 1440;
     protected static final int PREF_Y = 1080;
     public ArrayList<MyShape> Shapes = new ArrayList<>();
-    private final JPanel Frame;
+//    private final JPanel Frame;
+    private final JFrame Frame;
     public boolean SimComplete = false;
     private final ArrayList<StellarBody> Bodies;
-    protected Graphics2D g2;
+    protected Graphics2D g2 = (Graphics2D) super.getGraphics();
 
 
-    public Global(ArrayList<StellarBody> bodies) {
-        this.Frame = new JPanel();
+    public Global(ArrayList<StellarBody> bodies, JFrame Frame) {
+//        this.Frame = new JPanel();
+        this.Frame = Frame;
         this.Bodies = bodies;
-        this.Frame.setLayout(null);
+//        this.Frame.setLayout(null);
         this.Bodies.forEach(this::display_body);
 //        Start st = new Start();
+    }
+    @Override
+    public Dimension getPreferredSize() {
+        if (isPreferredSizeSet()) {return super.getPreferredSize();}
+        return new Dimension(PREF_X, PREF_Y);
     }
 
     public void display_body(StellarBody obj) {
@@ -124,32 +130,45 @@ public class Global extends JPanel {
             }
         }
     }
-    @Override
-    protected void paintComponent(Graphics g) {
-        System.out.println("b");
-        super.paintComponent(g);
-        super.setBackground(Color.WHITE);
-        this.g2 = (Graphics2D) g;
-        this.g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        for (MyShape shape : Shapes) {
-            shape.draw(this.g2, false);
-        }
+//    @Override
+//    protected void paintComponent(Graphics g) {
+//        System.out.println("b");
+//        super.paintComponent(g);
+//        super.setBackground(Color.WHITE);
+//        this.g2 = (Graphics2D) g;
+//        this.g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+//        for (MyShape shape : Shapes) {
+//            shape.draw(this.g2, false);
+//        }
+//        if (this.SimComplete) {
+//            for (StellarBody body : this.Bodies) {
+//                this.drawHistory(this.g2, body);
+//            }
+//        }
+//    }
+    public void paintScreen() {
+        this.g2 = (Graphics2D)super.getGraphics();
+        System.out.println(this.g2);
+//        new MyShape("Background", new Rectangle2D.Double(0,0,PREF_X,PREF_Y),Color.WHITE).draw(g2,false);
+//        super.setBackground(Color.WHITE);
+//        this.refresh();
+        this.g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON); // enable ant-aliasing
+        for (MyShape shape : Shapes) {shape.draw(this.g2, false);}
         if (this.SimComplete) {
             for (StellarBody body : this.Bodies) {
                 this.drawHistory(this.g2, body);
             }
         }
     }
-    @Override
-    public Dimension getPreferredSize() {
-        if (isPreferredSizeSet()) {return super.getPreferredSize();}
-        return new Dimension(PREF_X, PREF_Y);
-    }
+
     public void refresh() { // refreshes the canvas in real-time. god this took me ages to find the solution to
         EventQueue.invokeLater(this::repaint);
+//        this.repaint();
     }
     public void drawHistory(Graphics2D g2, StellarBody obj) {
+        System.out.println("a1");
         for (MyShape shape : this.Shapes) {
+            System.out.println("b1");
             if (!obj.Title.equals("Sun") && !shape.Title.equals("Sun")) {
                 if (shape.Title.equals(obj.Title)) {
                     Iterator<double[]> it = shape.PositionHistory.iterator();
@@ -187,6 +206,7 @@ public class Global extends JPanel {
                     }
                 }
             }
+            System.out.println("a");
             shape.draw(g2, true);
         }
     }
