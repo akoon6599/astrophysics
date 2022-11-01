@@ -27,7 +27,6 @@ public class Global extends JPanel {
         this.Bodies = bodies;
 //        this.Frame.setLayout(null);
         this.Bodies.forEach(this::display_body);
-//        Start st = new Start();
     }
     @Override
     public Dimension getPreferredSize() {
@@ -130,35 +129,24 @@ public class Global extends JPanel {
             }
         }
     }
-//    @Override
-//    protected void paintComponent(Graphics g) {
-//        System.out.println("b");
-//        super.paintComponent(g);
-//        super.setBackground(Color.WHITE);
-//        this.g2 = (Graphics2D) g;
-//        this.g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-//        for (MyShape shape : Shapes) {
-//            shape.draw(this.g2, false);
-//        }
-//        if (this.SimComplete) {
-//            for (StellarBody body : this.Bodies) {
-//                this.drawHistory(this.g2, body);
-//            }
-//        }
-//    }
-    public void paintScreen() {
-        this.g2 = (Graphics2D)super.getGraphics();
-        System.out.println(this.g2);
-//        new MyShape("Background", new Rectangle2D.Double(0,0,PREF_X,PREF_Y),Color.WHITE).draw(g2,false);
-//        super.setBackground(Color.WHITE);
-//        this.refresh();
-        this.g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON); // enable ant-aliasing
-        for (MyShape shape : Shapes) {shape.draw(this.g2, false);}
+    @Override
+    protected void paintComponent(Graphics g) {
+        System.out.println("b");
+        super.paintComponent(this.g2);
+        super.setBackground(Color.WHITE);
+        this.g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        for (MyShape shape : Shapes) {
+            shape.draw(this.g2, false);
+        }
         if (this.SimComplete) {
             for (StellarBody body : this.Bodies) {
                 this.drawHistory(this.g2, body);
             }
         }
+    }
+    public void paintScreen() {
+        this.g2 = (Graphics2D)super.getGraphics();
+        paintComponent(this.g2);
     }
 
     public void refresh() { // refreshes the canvas in real-time. god this took me ages to find the solution to

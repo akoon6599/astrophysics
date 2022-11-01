@@ -20,7 +20,7 @@ public class system {
 
     public static void main(String[] args) throws InterruptedException { // TODO: modulate the addition of bodies
         Sun = new StellarBody(0.0f,0.0f, "Sun", "Star", 1.988*Math.pow(10,7), 100, "0.00d", 0.0, Color.GRAY.darker());
-        StellarBody Earth = new StellarBody(120f,0f,"Earth","Planet",1.2*Math.pow(10,5), 25, "90.00d", 0.0, Color.GREEN.darker());
+        StellarBody Earth = new StellarBody(320f,0f,"Earth","Planet",1.2*Math.pow(10,5), 25, "90.00d", 0.0, Color.GREEN.darker());
 //        StellarBody Moon = new StellarBody(-400f, 0f, "Body1", "Planet", 2*Math.pow(10,4), 50, "270.00d", 6.20, Color.RED);
 //        StellarBody Test = new StellarBody(-400f, 0f, "Body2", "Planet", 2*Math.pow(10,4), 50, "270.00d", 6.20, Color.RED);
 //        StellarBody Test2 = new StellarBody(-400f, 0f, "Body3", "Planet", 2*Math.pow(10,4), 50, "270.00d", 6.20, Color.RED);
@@ -83,7 +83,7 @@ public class system {
             }
 
             global.collision(Bodies, Sun); // Check for collisions
-//            global.refresh(); // Repaint screen
+            global.refresh(); // Repaint screen
             Thread.sleep(CycleDelay);
             Instant endCycle = Instant.now();
             System.out.printf("%nCycle %s End: %s milliseconds%n%n", currentCycle, Duration.between(startCycle, endCycle).toMillis());
@@ -92,7 +92,7 @@ public class system {
         System.out.printf("Simulation End: %s seconds%n", Duration.between(start, end).toMillis()/1000.0);
         // Initiate drawing historical paths for all objects
         global.SimComplete = true;
-        global.paintScreen(); // leaving while testing, but this results in n+1 cycles
+//        global.paintScreen(); // leaving while testing, but this results in n+1 cycles
 //        global.refresh();
     }
 
