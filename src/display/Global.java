@@ -14,18 +14,18 @@ public class Global extends JPanel {
     protected static final int PREF_X = 1440;
     protected static final int PREF_Y = 1080;
     public ArrayList<MyShape> Shapes = new ArrayList<>();
-//    private final JPanel Frame;
-    private final JFrame Frame;
+    public final JPanel Frame;
+//    private final JFrame Frame;
     public boolean SimComplete = false;
     private final ArrayList<StellarBody> Bodies;
     protected Graphics2D g2 = (Graphics2D) super.getGraphics();
 
 
     public Global(ArrayList<StellarBody> bodies, JFrame Frame) {
-//        this.Frame = new JPanel();
-        this.Frame = Frame;
+        this.Frame = new JPanel();
+//        this.Frame = Frame;
         this.Bodies = bodies;
-//        this.Frame.setLayout(null);
+        this.Frame.setLayout(null);
         this.Bodies.forEach(this::display_body);
     }
     @Override
@@ -132,7 +132,6 @@ public class Global extends JPanel {
     @Override
     protected void paintComponent(Graphics g) {
         System.out.println("b");
-        super.paintComponent(this.g2);
         super.setBackground(Color.WHITE);
         this.g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         for (MyShape shape : Shapes) {
@@ -143,6 +142,8 @@ public class Global extends JPanel {
                 this.drawHistory(this.g2, body);
             }
         }
+
+//        super.paintComponent(this.g2);
     }
     public void paintScreen() {
         this.g2 = (Graphics2D)super.getGraphics();

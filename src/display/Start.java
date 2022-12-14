@@ -79,11 +79,11 @@ public class Start extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 dispose();
-                try {
-                    system.start_simulation(Start.this.Bodies, 10, Start.this);
-                } catch (InterruptedException ex) {
-                    throw new RuntimeException(ex);
-                }
+//                try {
+//                    system.start_simulation(Start.this.Bodies, 10, Start.this);
+//                } catch (InterruptedException ex) {
+//                    throw new RuntimeException(ex);
+//                }
             }
         });
         bodyField.addGroup(tmpBButtons).addGroup(tmpBBodies).addGroup(tmpBLabels);
