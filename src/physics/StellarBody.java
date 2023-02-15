@@ -8,11 +8,12 @@ public class StellarBody extends Object{
     public String Classification;
     public Integer Radius;
     public Color COLOR;
+    public boolean STATIC;
 
     // aila sucks
 
 
-    public StellarBody(Float posx, Float posy, String ttl, String cls, Double mass, Integer radius, String angle, Double mag, Color color) {
+    public StellarBody(Float posx, Float posy, String ttl, String cls, Double mass, Integer radius, String angle, Double mag, Color color, boolean Static) {
         super(angle, mag);
         this.Classification = cls;
         ArrayList<Float> pos = new ArrayList<>();
@@ -23,6 +24,7 @@ public class StellarBody extends Object{
         this.Mass = mass;
         this.Radius = radius;
         this.COLOR = color;
+        this.STATIC = Static;
     }
 
     public void effect_movement(StellarBody obj, Double TimeScale, Double DistanceScale) { // Called by main body, passes orbiter

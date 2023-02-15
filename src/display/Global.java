@@ -71,15 +71,13 @@ public class Global extends JPanel {
         }
     }
     public void move(StellarBody obj, Double TimeScale) {
-        for (MyShape shape: this.Shapes) {
-            if (shape.Title.equals(obj.Title)) {
-                if (!shape.isCollided) {
+            for (MyShape shape : this.Shapes) {
+                if (shape.Title.equals(obj.Title) && !shape.isCollided) {
                     obj.move(TimeScale);
                     Double[] mv = obj.Movement.evaluate(TimeScale);
                     shape.translate(mv[0], mv[1]);
                 }
             }
-        }
     }
     public void collision(ArrayList<StellarBody> bodies, StellarBody Sun) { // Goes through `bodies` and checks each for a collision - Sun is passed due to not being in `bodies`
         ArrayList<String> Check = new ArrayList<>();
