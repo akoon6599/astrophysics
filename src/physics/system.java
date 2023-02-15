@@ -21,21 +21,22 @@ public class system {
     public static int CYCLES = 250;
 
     public static void main(String[] args) { // TODO: modularize position of planets in add body menu
-        Sun = new StellarBody(0.0f,0.0f, "Sun", "Star", 1.988*Math.pow(10,7), 100, "0.00d", 0.0, Color.GRAY.darker());
+        Sun = new StellarBody(0.0f,0.0f, "Sun", "Star", 1.988*Math.pow(10,7), 100, "0.00d", 0.0, Color.GRAY.darker(), true);
 //        StellarBody Earth = new StellarBody(350f,0f,"Earth","Planet",1.2*Math.pow(10,6), 25, "90.00d", 0.0, Color.GREEN.darker());
-        StellarBody Moon = new StellarBody(-400f, 0f, "Body1", "Planet", 5*Math.pow(10,4), 50, "270.00d", 6.20, Color.RED);
-//        StellarBody Test = new StellarBody(-400f, 0f, "Body2", "Planet", 2*Math.pow(10,4), 50, "270.00d", 6.20, Color.RED);
+        StellarBody Moon = new StellarBody(-400f, 0f, "Body1", "Planet", 5*Math.pow(10,4), 50, "270.00d", 6.20, Color.RED, false);
+        StellarBody Test = new StellarBody(400f, 200f, "Body2", "Planet", 9.2*Math.pow(10,4), 50, "270.00d", 14.20, Color.RED, false);
 //        StellarBody Test2 = new StellarBody(-400f, 0f, "Body3", "Planet", 2*Math.pow(10,4), 50, "270.00d", 6.20, Color.RED);
-//        StellarBody Test3 = new StellarBody(-400f, 0f, "Body4", "Planet", 2*Math.pow(10,4), 50, "270.00d", 6.20, Color.RED);
+        StellarBody Test3 = new StellarBody(-200f, 500f, "Body4", "Planet", 2.15*Math.pow(10,4), 50, "348.00d", 5.0, Color.BLACK, false);
 //
 
 
 //        Bodies.add(Earth);
-//        Bodies.add(Test);
+        Bodies.add(Test);
 //        Bodies.add(Test2);
-//        Bodies.add(Test3);
+        Bodies.add(Test3);
 //        Sun.find_orbit(Earth, TimeScale, DistScale);
 ////        Sun.find_orbit(Moon, TimeScale, DistScale);
+        Sun.find_orbit(Test, TimeScale, DistScale);
         Bodies.add(Moon);
 ////        Bodies.add(Comet);
 
@@ -96,14 +97,16 @@ public class system {
     private static void update_frame(Global global) {
         global.refresh();
         for (StellarBody body : Bodies) {
-            Bodies.forEach(item -> {if (!item.Title.equals(body.Title)) // i hate lambdas
+            Bodies.forEach(item -> {if (!item.Title.equals(body.Title))
             {
                 item.effect_movement(body, TimeScale, DistScale); // Each body effects every other body
             }
             });
-            Sun.effect_movement(body, TimeScale, DistScale); // then the Sun effects every body
-            global.move(body, TimeScale);
-            global.display_body(body);
+            if (!body.STATIC) {
+                Sun.effect_movement(body, TimeScale, DistScale); // then the Sun effects every body
+                global.move(body, TimeScale);
+                global.display_body(body);
+            }
         }
     }
 

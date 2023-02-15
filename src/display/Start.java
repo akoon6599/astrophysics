@@ -7,6 +7,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
 import java.awt.geom.Ellipse2D;
 import java.util.ArrayList;
 
@@ -32,6 +34,7 @@ public class Start extends JFrame {
         mainMenu();
     }
     private void mainMenu() {
+        this.setTitle("Main Menu");
         JButton addBBody = new JButton("Add Body");
         addBBody.setFont(new Font("Times New Roman", Font.BOLD, 24));
         components.add(addBBody);
@@ -45,8 +48,8 @@ public class Start extends JFrame {
             bodyDisplays.add(new Circle(0, 0,
                                         body.Radius,body.Radius));
             bodyLabels.add(new JLabel(
-                    String.format("Angle: %.2f -- Magnitude: %.3f -- Classification: %s",
-                            body.Movement.coefficient(), body.Movement.getMagnitude(), body.Classification)));
+                    String.format("Angle: %.2f -- Magnitude: %.3f -- Classification: %s -- Mass: %.0fkg",
+                            body.Movement.coefficient(), body.Movement.getMagnitude(), body.Classification, body.Mass)));
         }
         for (JButton btn : (ArrayList<JButton>)bodyButtons.clone()) { // maybe change the buttons to an edit/remove dropdown action?
             btn.addActionListener(e -> {
@@ -131,13 +134,14 @@ public class Start extends JFrame {
         JButton rtn = new JButton("Return to Menu");
         JTextField angle = new JTextField(6);
         JTextField magnitude = new JTextField(6);
-        JButton pos = new JButton("CLICK"); // TODO: do
+        JTextField posx = new JTextField("x", 5);
+        JTextField posy = new JTextField("y", 5);
         JTextField title = new JTextField(20);
         JTextField classif = new JTextField(20);
         JTextField mass = new JTextField(8);
         JTextField radius = new JTextField(6);
         JTextField color = new JTextField(6);
-        JToggleButton anchor = new JToggleButton("False");
+        JCheckBox anchor = new JCheckBox("False");
         JButton preview = new JButton("Preview Movement"); // TODO: do
         JButton finalize = new JButton("Finalize");
 
@@ -148,6 +152,7 @@ public class Start extends JFrame {
             layout.setAutoCreateGaps(true);
             layout.setAutoCreateContainerGaps(true);
             rtn.addActionListener(e -> AddBody.this.dispose());
+            this.setTitle("Planet Action Menu");
             // determine labels
             JLabel angleText = new JLabel("Angle: ");
             JLabel magText = new JLabel("Magnitude: ");
@@ -160,49 +165,84 @@ public class Start extends JFrame {
             JLabel radText = new JLabel("Radius: ");
             JLabel colText = new JLabel("Icon Color: ");
             JLabel ancText = new JLabel("Anchor: ");
+            JLabel errorText = new JLabel("");
 
             // TODO: add button interaction logic
             finalize.addActionListener(e -> {
-                AddBody.this.finalize_body();
-                dispose();
+                try {
+                    AddBody.this.finalize_body();
+                    dispose();
+                }
+                catch (NumberFormatException exception) {
+                    errorText.setText(String.format("Erorr: %s",exception.getMessage()));
+                }
+            });
+            posx.addFocusListener(new FocusAdapter() {
+                @Override
+                public void focusGained(FocusEvent e) {
+                    JTextField source = (JTextField)e.getComponent();
+                    source.setText("");
+                    source.removeFocusListener(this);
+                }
+            });
+            posy.addFocusListener(new FocusAdapter() {
+                @Override
+                public void focusGained(FocusEvent e) {
+                    JTextField source = (JTextField)e.getComponent();
+                    source.setText("");
+                    source.removeFocusListener(this);
+                }
+            });
+            anchor.addActionListener(e -> {
+                JCheckBox source = (JCheckBox) e.getSource();
+                if (source.isSelected()) {
+                    source.setText("True ");
+                }
+                else {
+                    source.setText("False");
+                }
             });
 
 
 
-            layout.setHorizontalGroup(layout.createSequentialGroup()
-                    .addGroup(layout.createParallelGroup(LEADING)
-                            .addComponent(rtn)
-                            .addComponent(angleText)
-                            .addComponent(magText)
-                            .addComponent(posText)
-                            .addComponent(titleText)
-                            .addComponent(classText))
-                    .addGap(15,15,15)
-                    .addGroup(layout.createParallelGroup(LEADING)
-                            .addComponent(angle)
-                            .addComponent(magnitude)
-                            .addComponent(pos)
-                            .addComponent(title)
-                            .addComponent(classif))
-                    .addGap(10,10,10)
-                    .addGroup(layout.createParallelGroup(LEADING)
-                            .addComponent(physLabel)
-                            .addComponent(cosLabel))
-                    .addGroup(layout.createParallelGroup(LEADING)
-                            .addComponent(massText)
-                            .addComponent(radText)
-                            .addComponent(colText)
-                            .addComponent(ancText))
-                    .addGap(15,15,15)
-                    .addGroup(layout.createParallelGroup(LEADING)
-                            .addComponent(mass)
-                            .addComponent(radius)
-                            .addComponent(color)
-                            .addComponent(anchor))
-                    .addGroup(layout.createParallelGroup(TRAILING)
-                            .addComponent(preview)
-                            .addComponent(finalize))
-            );
+                    layout.setHorizontalGroup(layout.createSequentialGroup()
+                            .addGroup(layout.createParallelGroup(LEADING)
+                                    .addComponent(rtn)
+                                    .addComponent(angleText)
+                                    .addComponent(magText)
+                                    .addComponent(posText)
+                                    .addComponent(titleText)
+                                    .addComponent(classText)
+                                    .addComponent(errorText))
+                            .addGap(15, 15, 15)
+                            .addGroup(layout.createParallelGroup(LEADING)
+                                    .addComponent(angle)
+                                    .addComponent(magnitude)
+                                    .addGroup(layout.createSequentialGroup()
+                                            .addComponent(posx)
+                                            .addGap(5, 5, 5)
+                                            .addComponent(posy))
+                                    .addComponent(title)
+                                    .addComponent(classif))
+                            .addGap(10, 10, 10)
+                            .addGroup(layout.createParallelGroup(LEADING)
+                                    .addComponent(physLabel)
+                                    .addComponent(cosLabel))
+                            .addGroup(layout.createParallelGroup(LEADING)
+                                    .addComponent(massText)
+                                    .addComponent(radText)
+                                    .addComponent(colText)
+                                    .addComponent(ancText))
+                            .addGap(15, 15, 15)
+                            .addGroup(layout.createParallelGroup(LEADING)
+                                    .addComponent(mass)
+                                    .addComponent(radius)
+                                    .addComponent(color)
+                                    .addComponent(anchor))
+                            .addGroup(layout.createParallelGroup(TRAILING)
+                                    .addComponent(preview)
+                                    .addComponent(finalize))
+                    );
             layout.setVerticalGroup(layout.createSequentialGroup()
                     .addGroup(layout.createParallelGroup(BASELINE)
                             .addComponent(rtn)
@@ -224,7 +264,8 @@ public class Start extends JFrame {
                     .addGap(10,10,10)
                     .addGroup(layout.createParallelGroup(BASELINE)
                             .addComponent(posText)
-                            .addComponent(pos))
+                            .addComponent(posx)
+                            .addComponent(posy))
                     .addGap(25,25,25)
                     .addComponent(cosLabel)
                     .addGap(10,10,10)
@@ -238,8 +279,10 @@ public class Start extends JFrame {
                             .addComponent(classText)
                             .addComponent(classif)
                             .addComponent(ancText)
+                            .addGap(0,0,5)
                             .addComponent(anchor))
                     .addGap(25,25,25)
+                    .addComponent(errorText)
                     .addComponent(finalize));
 
             pack();
@@ -248,7 +291,7 @@ public class Start extends JFrame {
         private void finalize_body() { // TODO: do the position sutff here too
             Start.this.Bodies.add(new StellarBody(-400f,-400f, title.getText(),classif.getText(),
                     Double.parseDouble(mass.getText()),Integer.parseInt(radius.getText()),angle.getText(),
-                    Double.parseDouble(magnitude.getText()),getColorByName(color.getText())));
+                    Double.parseDouble(magnitude.getText()),getColorByName(color.getText()), anchor.isSelected()));
             Start.this.refresh();
         }
         public static Color getColorByName(String name) { // Credit: shmosel @ stackoverflow
