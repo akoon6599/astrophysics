@@ -21,7 +21,7 @@ public class Start extends JFrame {
         if (isPreferredSizeSet()) {return super.getPreferredSize();}
         return new Dimension(PREF_X, PREF_Y);
     }
-    ArrayList<StellarBody> Bodies = new ArrayList<>();
+    ArrayList<StellarBody> Bodies;
     ArrayList<JComponent> components = new ArrayList<>();
     public Start(ArrayList<StellarBody> Bodies) {
         this.Bodies = Bodies;
@@ -49,13 +49,10 @@ public class Start extends JFrame {
                             body.Movement.coefficient(), body.Movement.getMagnitude(), body.Classification)));
         }
         for (JButton btn : (ArrayList<JButton>)bodyButtons.clone()) { // maybe change the buttons to an edit/remove dropdown action?
-            btn.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    Start.this.Bodies.remove(bodyButtons.indexOf(btn));
-                    bodyButtons.remove(btn);
-                    Start.this.refresh();
-                }
+            btn.addActionListener(e -> {
+                Start.this.Bodies.remove(bodyButtons.indexOf(btn));
+                bodyButtons.remove(btn);
+                Start.this.refresh();
             });
         }
 
@@ -75,18 +72,15 @@ public class Start extends JFrame {
             tmpBLabels.addComponent(c);
             components.add(c);}
         JButton Simulate = new JButton("Start Simulation");
-        Simulate.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                dispose();
-//                try {
-//                    system.start_simulation(Start.this.Bodies, 10, Start.this);
-//                } catch (InterruptedException ex) {
-//                    throw new RuntimeException(ex);
-//                }
+        Simulate.addActionListener(e -> {
+            Start.this.setVisible(false);
+            try {
+                system.start_simulation(Start.this.Bodies, system.CYCLES);
+            } catch (InterruptedException ex) {
+                throw new RuntimeException(ex);
             }
         });
-        bodyField.addGroup(tmpBButtons).addGroup(tmpBBodies).addGroup(tmpBLabels);
+        bodyField.addGroup(tmpBButtons).addGroup(tmpBBodies).addGroup(tmpBLabels); // HORIZONTAL
         layout.setHorizontalGroup(
                 layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                         .addGroup(layout.createSequentialGroup()
@@ -122,7 +116,6 @@ public class Start extends JFrame {
         components.forEach(this::remove);
         this.mainMenu();
         EventQueue.invokeLater(this::repaint);
-        System.out.println("a");
     }
     class AddBody extends JFrame {
         protected static final int PREF_X = 720;
@@ -135,7 +128,7 @@ public class Start extends JFrame {
         }
 
         // determine interactables - here for use in finalize_body
-        JButton rtn = new JButton("Return to Menu"); // TODO: done
+        JButton rtn = new JButton("Return to Menu");
         JTextField angle = new JTextField(6);
         JTextField magnitude = new JTextField(6);
         JButton pos = new JButton("CLICK"); // TODO: do
@@ -146,7 +139,7 @@ public class Start extends JFrame {
         JTextField color = new JTextField(6);
         JToggleButton anchor = new JToggleButton("False");
         JButton preview = new JButton("Preview Movement"); // TODO: do
-        JButton finalize = new JButton("Finalize"); // TODO: do
+        JButton finalize = new JButton("Finalize");
 
 
         public AddBody() {
@@ -169,11 +162,9 @@ public class Start extends JFrame {
             JLabel ancText = new JLabel("Anchor: ");
 
             // TODO: add button interaction logic
-            finalize.addActionListener(new ActionListener() {
-                @Override public void actionPerformed(ActionEvent e) {
-                    AddBody.this.finalize_body();
-                    dispose();
-                }
+            finalize.addActionListener(e -> {
+                AddBody.this.finalize_body();
+                dispose();
             });
 
 
@@ -274,10 +265,10 @@ public class Start extends JFrame {
 
 class Circle extends JComponent{
 
-    private int height;
-    private int width;
-    private int xPos;
-    private int yPos;
+    private final int height;
+    private final int width;
+    private final int xPos;
+    private final int yPos;
 
     public Circle(int x,int y,int height,int width) {
         this.height = height;

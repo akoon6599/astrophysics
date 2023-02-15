@@ -10,29 +10,43 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Objects;
 
+class GlobalFrame extends JFrame {
+    protected static final int PREF_X = 1440;
+    protected static final int PREF_Y = 1080;
+    @Override
+    public Dimension getPreferredSize() {
+        if (isPreferredSizeSet()) {return super.getPreferredSize();}
+        return new Dimension(PREF_X, PREF_Y);
+    }
+    public GlobalFrame() {
+    }
+}
+
 public class Global extends JPanel {
     protected static final int PREF_X = 1440;
     protected static final int PREF_Y = 1080;
     public ArrayList<MyShape> Shapes = new ArrayList<>();
-    public final JPanel Frame;
-//    private final JFrame Frame;
+//    public final JPanel Frame;
+    public final JFrame Frame;
     public boolean SimComplete = false;
     private final ArrayList<StellarBody> Bodies;
     protected Graphics2D g2 = (Graphics2D) super.getGraphics();
 
 
-    public Global(ArrayList<StellarBody> bodies, JFrame Frame) {
-        this.Frame = new JPanel();
-//        this.Frame = Frame;
+    public Global(ArrayList<StellarBody> bodies) {
+        this.Frame = new GlobalFrame();
+        this.Frame.getContentPane().add(this);
         this.Bodies = bodies;
-        this.Frame.setLayout(null);
         this.Bodies.forEach(this::display_body);
+        this.setPreferredSize(new Dimension(PREF_X, PREF_Y));
+        this.Frame.pack();
     }
     @Override
     public Dimension getPreferredSize() {
         if (isPreferredSizeSet()) {return super.getPreferredSize();}
         return new Dimension(PREF_X, PREF_Y);
     }
+
 
     public void display_body(StellarBody obj) {
         MyShape newShape = new MyShape(obj.Title, new Ellipse2D.Float( // Create a new shape, missing history and flags
@@ -130,9 +144,9 @@ public class Global extends JPanel {
         }
     }
     @Override
-    protected void paintComponent(Graphics g) {
-        System.out.println("b");
-        super.setBackground(Color.WHITE);
+    public void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        this.g2 = (Graphics2D)g;
         this.g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         for (MyShape shape : Shapes) {
             shape.draw(this.g2, false);
@@ -143,21 +157,15 @@ public class Global extends JPanel {
             }
         }
 
-//        super.paintComponent(this.g2);
-    }
-    public void paintScreen() {
-        this.g2 = (Graphics2D)super.getGraphics();
-        paintComponent(this.g2);
     }
 
     public void refresh() { // refreshes the canvas in real-time. god this took me ages to find the solution to
-        EventQueue.invokeLater(this::repaint);
-//        this.repaint();
+        this.g2 = (Graphics2D)super.getGraphics();
+        paintImmediately(0,0,PREF_X,PREF_Y);
+        this.revalidate();
     }
     public void drawHistory(Graphics2D g2, StellarBody obj) {
-        System.out.println("a1");
         for (MyShape shape : this.Shapes) {
-            System.out.println("b1");
             if (!obj.Title.equals("Sun") && !shape.Title.equals("Sun")) {
                 if (shape.Title.equals(obj.Title)) {
                     Iterator<double[]> it = shape.PositionHistory.iterator();
@@ -195,7 +203,6 @@ public class Global extends JPanel {
                     }
                 }
             }
-            System.out.println("a");
             shape.draw(g2, true);
         }
     }
@@ -205,7 +212,7 @@ public class Global extends JPanel {
 }
 
 class MyShape {
-    private Path2D path = new Path2D.Double();
+    private final Path2D path = new Path2D.Double();
     public Shape Shape;
     public String Title;
     public double PosX;
