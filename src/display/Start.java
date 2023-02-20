@@ -24,14 +24,25 @@ public class Start extends JFrame {
         return new Dimension(PREF_X, PREF_Y);
     }
     ArrayList<StellarBody> Bodies;
+    ArrayList<StellarBody> initialBodies = new ArrayList<>();
     ArrayList<JComponent> components = new ArrayList<>();
     public Start(ArrayList<StellarBody> Bodies) {
         this.Bodies = Bodies;
+        for (StellarBody b : Bodies) {
+            initialBodies.add(b.clone());
+        }
         layout = new GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setAutoCreateGaps(true);
         layout.setAutoCreateContainerGaps(true);
         mainMenu();
+    }
+    public void reset() {
+        Bodies.clear();
+//        Bodies = initialBodies;
+        for (StellarBody b : initialBodies) {
+            Bodies.add(b.clone());
+        }
     }
     private void mainMenu() {
         this.setTitle("Main Menu");
@@ -48,12 +59,13 @@ public class Start extends JFrame {
             bodyDisplays.add(new Circle(0, 0,
                                         body.Radius,body.Radius));
             bodyLabels.add(new JLabel(
-                    String.format("Angle: %.2f -- Magnitude: %.3f -- Classification: %s -- Mass: %.0fkg",
-                            body.Movement.coefficient(), body.Movement.getMagnitude(), body.Classification, body.Mass)));
+                    String.format("Angle: %.2f -- Magnitude: %.3f -- Classification: %s -- Mass: %.0fkg -- Pos (X,Y): (%.0f, %.0f) -- Anchor: %s",
+                            body.Movement.coefficient(), body.Movement.getMagnitude(), body.Classification, body.Mass, body.Position.get(0), body.Position.get(1), body.STATIC)));
         }
-        for (JButton btn : (ArrayList<JButton>)bodyButtons.clone()) { // maybe change the buttons to an edit/remove dropdown action?
+        for (JButton btn : (ArrayList<JButton>)bodyButtons.clone()) { // TODO: maybe change the buttons to an edit/remove dropdown action?
             btn.addActionListener(e -> {
                 Start.this.Bodies.remove(bodyButtons.indexOf(btn));
+                Start.this.initialBodies.remove(bodyButtons.indexOf(btn));
                 bodyButtons.remove(btn);
                 Start.this.refresh();
             });
@@ -134,8 +146,8 @@ public class Start extends JFrame {
         JButton rtn = new JButton("Return to Menu");
         JTextField angle = new JTextField(6);
         JTextField magnitude = new JTextField(6);
-        JTextField posx = new JTextField("x", 5);
-        JTextField posy = new JTextField("y", 5);
+        JTextField posx = new JTextField("X POS", 5);
+        JTextField posy = new JTextField("Y POS",5);
         JTextField title = new JTextField(20);
         JTextField classif = new JTextField(20);
         JTextField mass = new JTextField(8);
@@ -167,14 +179,34 @@ public class Start extends JFrame {
             JLabel ancText = new JLabel("Anchor: ");
             JLabel errorText = new JLabel("");
 
-            // TODO: add button interaction logic
+            // TODO: add button interaction logic -- what does this mean???
             finalize.addActionListener(e -> {
                 try {
-                    AddBody.this.finalize_body();
+                    StellarBody nB = AddBody.this.finalize_body();
+                    Start.this.Bodies.add(nB);
+                    Start.this.initialBodies.add(nB);
+                    Start.this.refresh();
                     dispose();
                 }
                 catch (NumberFormatException exception) {
                     errorText.setText(String.format("Erorr: %s",exception.getMessage()));
+                }
+            });
+            preview.addActionListener(e -> {
+                try {
+                    ArrayList<StellarBody> displayBodies = new ArrayList<>();
+                    for (StellarBody b : Start.this.Bodies) {
+                        displayBodies.add(b.clone());
+                    }
+                    StellarBody nB = AddBody.this.finalize_body();
+                    displayBodies.add(nB);
+                    Global GLOBAL = new Global(displayBodies);
+                    system.display(GLOBAL);
+                    GLOBAL.previewMovement(nB);
+                } catch (NumberFormatException exception) {
+                    errorText.setText(String.format("Erorr: %s",exception.getMessage()));
+//                } catch (InterruptedException ex) {
+//                    throw new RuntimeException(ex);
                 }
             });
             posx.addFocusListener(new FocusAdapter() {
@@ -203,47 +235,45 @@ public class Start extends JFrame {
                 }
             });
 
-
-
-                    layout.setHorizontalGroup(layout.createSequentialGroup()
-                            .addGroup(layout.createParallelGroup(LEADING)
-                                    .addComponent(rtn)
-                                    .addComponent(angleText)
-                                    .addComponent(magText)
-                                    .addComponent(posText)
-                                    .addComponent(titleText)
-                                    .addComponent(classText)
-                                    .addComponent(errorText))
-                            .addGap(15, 15, 15)
-                            .addGroup(layout.createParallelGroup(LEADING)
-                                    .addComponent(angle)
-                                    .addComponent(magnitude)
-                                    .addGroup(layout.createSequentialGroup()
-                                            .addComponent(posx)
-                                            .addGap(5, 5, 5)
-                                            .addComponent(posy))
-                                    .addComponent(title)
-                                    .addComponent(classif))
-                            .addGap(10, 10, 10)
-                            .addGroup(layout.createParallelGroup(LEADING)
-                                    .addComponent(physLabel)
-                                    .addComponent(cosLabel))
-                            .addGroup(layout.createParallelGroup(LEADING)
-                                    .addComponent(massText)
-                                    .addComponent(radText)
-                                    .addComponent(colText)
-                                    .addComponent(ancText))
-                            .addGap(15, 15, 15)
-                            .addGroup(layout.createParallelGroup(LEADING)
-                                    .addComponent(mass)
-                                    .addComponent(radius)
-                                    .addComponent(color)
-                                    .addComponent(anchor))
-                            .addGroup(layout.createParallelGroup(TRAILING)
-                                    .addComponent(preview)
-                                    .addComponent(finalize))
-                    );
-            layout.setVerticalGroup(layout.createSequentialGroup()
+            layout.setHorizontalGroup(layout.createSequentialGroup() // HORIZONTAL
+                    .addGroup(layout.createParallelGroup(LEADING)
+                            .addComponent(rtn)
+                            .addComponent(angleText)
+                            .addComponent(magText)
+                            .addComponent(posText)
+                            .addComponent(titleText)
+                            .addComponent(classText)
+                            .addComponent(errorText))
+                    .addGap(15, 15, 15)
+                    .addGroup(layout.createParallelGroup(LEADING)
+                            .addComponent(angle)
+                            .addComponent(magnitude)
+                            .addGroup(layout.createSequentialGroup()
+                                    .addComponent(posx)
+                                    .addGap(5, 5, 5)
+                                    .addComponent(posy))
+                            .addComponent(title)
+                            .addComponent(classif))
+                    .addGap(10, 10, 10)
+                    .addGroup(layout.createParallelGroup(LEADING)
+                            .addComponent(physLabel)
+                            .addComponent(cosLabel))
+                    .addGroup(layout.createParallelGroup(LEADING)
+                            .addComponent(massText)
+                            .addComponent(radText)
+                            .addComponent(colText)
+                            .addComponent(ancText))
+                    .addGap(15, 15, 15)
+                    .addGroup(layout.createParallelGroup(LEADING)
+                            .addComponent(mass)
+                            .addComponent(radius)
+                            .addComponent(color)
+                            .addComponent(anchor))
+                    .addGroup(layout.createParallelGroup(TRAILING)
+                            .addComponent(preview)
+                            .addComponent(finalize))
+            );
+            layout.setVerticalGroup(layout.createSequentialGroup() // VERTICAL
                     .addGroup(layout.createParallelGroup(BASELINE)
                             .addComponent(rtn)
                             .addComponent(preview))
@@ -288,11 +318,11 @@ public class Start extends JFrame {
             pack();
             setLocationRelativeTo(null);
         }
-        private void finalize_body() { // TODO: do the position sutff here too
-            Start.this.Bodies.add(new StellarBody(-400f,-400f, title.getText(),classif.getText(),
+        private StellarBody finalize_body() {
+            StellarBody nB = new StellarBody(Float.parseFloat(posx.getText()),Float.parseFloat(posy.getText()), title.getText(),classif.getText(),
                     Double.parseDouble(mass.getText()),Integer.parseInt(radius.getText()),angle.getText(),
-                    Double.parseDouble(magnitude.getText()),getColorByName(color.getText()), anchor.isSelected()));
-            Start.this.refresh();
+                    Double.parseDouble(magnitude.getText()),getColorByName(color.getText()), anchor.isSelected());
+            return nB;
         }
         public static Color getColorByName(String name) { // Credit: shmosel @ stackoverflow
             try {

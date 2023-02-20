@@ -1,6 +1,7 @@
 package physics;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class Line {
     public ArrayList<Float> Start;
@@ -26,8 +27,26 @@ public class Line {
 
         this.Movement = new Movement(String.format("%.2fd", angle), 0.00);
     }
+    public Line(ArrayList<Float> Start, ArrayList<Float> End, float[] CENTER, float RADIUS) {
+        Start.set(0, Start.get(0)+CENTER[0]);
+        Start.set(1, Start.get(1)+CENTER[1]);
+        End.set(0, End.get(0)+CENTER[0]);
+        End.set(1, End.get(1)+CENTER[1]);
+        this.Start = Start;
+        this.End = End;
+        this.Distance = Math.sqrt(Math.pow(End.get(0) - Start.get(0),2) + Math.pow(End.get(1) - Start.get(1), 2));
+        double angle = Math.toDegrees(Math.atan2(End.get(1) - Start.get(1), End.get(0) - Start.get(0)));
+        if (angle >= 360) {
+            angle -= 360;
+        }
+        if (angle < 0) {
+            angle += 360;
+        }
 
-    public Line(double[] startPos, double[] endPos) {
+        this.Movement = new Movement(String.format("%.2fd", angle), 0.00);
+    }
+
+    public Line(Double[] startPos, Double[] endPos) {
         Double oX = startPos[0];
         Double oY = startPos[1];
         Double sX = endPos[0];

@@ -1,7 +1,6 @@
 package physics;
 
 import java.awt.Color;
-import java.util.ArrayList;
 
 public class StellarBody extends Object{
     static final Double GravConstant = 6.674*Math.pow(10, -11);
@@ -16,15 +15,22 @@ public class StellarBody extends Object{
     public StellarBody(Float posx, Float posy, String ttl, String cls, Double mass, Integer radius, String angle, Double mag, Color color, boolean Static) {
         super(angle, mag);
         this.Classification = cls;
-        ArrayList<Float> pos = new ArrayList<>();
-        pos.add(posx);
-        pos.add(posy);
-        this.Position = pos;
+        this.Position.add(posx);
+        this.Position.add(posy);
+        this.InitialPosition.add(posx);
+        this.InitialPosition.add(posy);
         this.Title = ttl;
         this.Mass = mass;
+        this.InitialMass = mass;
         this.Radius = radius;
         this.COLOR = color;
         this.STATIC = Static;
+    }
+    @Override
+    public StellarBody clone() {
+        return new StellarBody(this.getInitialPosition()[0], this.getInitialPosition()[1], this.Title,
+                this.Classification, this.getInitialMass(), this.Radius, this.getInitialMovement().getAngle(), this.getInitialMovement().getMagnitude(),
+                this.COLOR, this.STATIC);
     }
 
     public void effect_movement(StellarBody obj, Double TimeScale, Double DistanceScale) { // Called by main body, passes orbiter
@@ -49,7 +55,7 @@ public class StellarBody extends Object{
                 Math.abs(nMagnitudePrimary - nMagnitudeTertiary) < 1e-4) {
             nMagnitude = nMagnitudePrimary;}
         else {nMagnitude = 0;
-            System.out.printf("MAGNITUDE ERROR %s:%s%n", nMagnitudePrimary, nMagnitudeSecondary);}
+            System.out.printf("MAGNITUDE ERROR BODY %s %s:%s:%s%n", obj.Title, nMagnitudePrimary, nMagnitudeSecondary, nMagnitudeTertiary);}
         obj.Movement = new Movement(String.format("%.2fd", newAngle), nMagnitude);
     }
 

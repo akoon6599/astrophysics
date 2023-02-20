@@ -22,6 +22,7 @@ public class Movement {
         this.Magnitude = mg;
     }
     public Double getMagnitude() {return this.Magnitude;}
+    public String getAngle() {return this.Angle;}
 
     public Double coefficient() {
         double rtn = Double.parseDouble(this.Angle.replace("d", ""));
