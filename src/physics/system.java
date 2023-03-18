@@ -9,31 +9,34 @@ import java.awt.*;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Scanner;
 
 public class system {
-    public static final Double TimeScale = 1.0;
-    public static final Double DistScale = 0.05;
+//    public static final Double TimeScale = 3.1536e14;
+    public static final Double DistScale = 5.2e14;
+    public static final Double TimeScale = 6*DistScale;
     static final long CycleDelay = 5; // Milliseconds
-    public static int CYCLES = 1000;
+    public static int CYCLES = 2500;
     static long[] CycleDelays = new long[CYCLES];
     static ArrayList<StellarBody> Bodies = new ArrayList<>();
     static Global GLOBAL;
     static Start START;
-
-    public static void main(String[] args) { // TODO: maybe make a 3 body stable system. like a moon around earth around the sun. maybe. that will be hard
-        StellarBody Sun = new StellarBody(0.0f,0.0f, "Sun", "Star", 1.988*Math.pow(10,7), 100, "0.00d", 0.0, Color.GRAY.darker(), true);
-        StellarBody Earth = new StellarBody(350f,0f,"Earth","Planet",1.2*Math.pow(10,6), 25, "-90.00d", 7.8, Color.GREEN.darker(), false);
-        StellarBody Moon = new StellarBody(-400f, 0f, "Body1", "Planet", 5*Math.pow(10,4), 15, "90.00d", 6.80, Color.RED, false);
-//        StellarBody Test = new StellarBody(-400f, 0f, "Body2", "Planet", 2*Math.pow(10,4), 50, "270.00d", 6.20, Color.RED);
-//        StellarBody Test2 = new StellarBody(-400f, 0f, "Body3", "Planet", 2*Math.pow(10,4), 50, "270.00d", 6.20, Color.RED);
-//        StellarBody Test3 = new StellarBody(-200f, 500f, "Body4", "Planet", 2.15*Math.pow(10,4), 50, "348.00d", 5.0, Color.BLACK, false);
-//          // TODO: also maybe like add a moon thing so that you can use find_orbit properly. will also probably help with the one above
-
+//Perihelion is too low for all planets for some reason. Far more elliptical than should be
+    public static void main(String[] args) {
+        StellarBody Sun = new StellarBody(0.0f,0.0f, "Sun", "Star", 1.99e30, 30, "0.00d", 0.0, Color.GRAY.darker(), true);
+        StellarBody Earth = new StellarBody(299.2f,0f,"Earth","Planet",5.96e24, 10, "90.00d", 10.0, Color.GREEN.darker(), false, Sun);
+         // TODO: also maybe like add a moon thing so that you can use find_orbit properly. will also probably help with the one above
+        StellarBody Venus = new StellarBody(214.8f,0f,"Venus","Planet",4.86e24,10,"90.00d",10.0,Color.GRAY,false, Sun);
+        StellarBody Mercury = new StellarBody(-115.8f, 0.0f, "Mercury", "Planet", 0.33e24,5,"-90.00d",17.0,Color.GRAY,false, Sun);
 
         Bodies.add(Sun);
+//        Bodies.add(Mercury);
+//        Bodies.add(Venus);
         Bodies.add(Earth);
-        Bodies.add(Moon);
-        Sun.find_orbit(Moon, TimeScale, DistScale);
+//        Sun.find_orbit(Bodies.get(Bodies.indexOf(Mercury)), DistScale, TimeScale);
+//        Sun.find_orbit(Bodies.get(Bodies.indexOf(Venus)),DistScale, TimeScale);
+        Sun.find_orbit(Bodies.get(Bodies.indexOf(Earth)),DistScale, TimeScale);
 
         START = new Start(Bodies);
         display(START);
@@ -49,14 +52,14 @@ public class system {
         Thread.sleep(1000); // give screen a chance to open before starting sim
         Instant start = Instant.now();
 
-        update_frame(global);
-
         for (int currentCycle = 0; currentCycle < Cycles; currentCycle++) {
-//            System.out.printf("%n%nHow Many Shapes Exist? : %s%n%n", global.Shapes.size());
+            for (StellarBody body : Bodies) {
+                System.out.printf("POSITION: %s:%s%n", body.Position.get(0), body.Position.get(1));
+            }
             Instant startCycle = Instant.now();
+            global.collision(Bodies);
             update_frame(global);
 
-            global.collision(Bodies);
             Thread.sleep(CycleDelay);
             Instant endCycle = Instant.now();
             System.out.printf("%nCycle %s End: %s milliseconds%n%n", currentCycle, Duration.between(startCycle, endCycle).toMillis());
@@ -66,12 +69,18 @@ public class system {
         System.out.printf("Simulation End: %s seconds%n", Duration.between(start, end).toMillis()/1000.0);
         // Initiate drawing historical paths for all objects
         global.SimComplete = true;
+        CycleDelays[0] = CycleDelay;
         int maxDev = 0;
-        for (long delay : CycleDelays) {
-            int dif = (int)Math.abs(delay-CycleDelay);
-            maxDev = Math.max(dif, maxDev);
+        int maxCycle = 0;
+        for (int i=0;i<CycleDelays.length;i++) {
+            long delay=CycleDelays[i];
+            int dif = (int)Math.abs(CycleDelay-delay);
+            if (maxDev < dif) {
+                maxDev = dif;
+                maxCycle = i;
+            }
         }
-        System.out.printf("Maximum Deviation Between Cycle Delay and Real Time: %s milliseconds%n", maxDev);
+        System.out.printf("Maximum Deviation Between Cycle Delay and Real Time: %s milliseconds on Cycle %s%n", maxDev, maxCycle);
     }
 
     private static void update_frame(Global global) {
@@ -79,10 +88,12 @@ public class system {
         for (StellarBody body : Bodies) {
             Bodies.forEach(item -> {if (!item.Title.equals(body.Title))
             {
-                item.effect_movement(body, TimeScale, DistScale); // Each body effects every other body
+                System.out.printf("%s;%s%n",body.Title,item.Title);
+                body.effect_movement(item, TimeScale, DistScale); // Each body effects every other body
             }
             });
-            if (!body.STATIC) {global.move(body, TimeScale);
+            if (!body.STATIC) {
+                global.move(body, TimeScale, DistScale);
                 global.displayBody(body);
             }
         }
@@ -97,7 +108,6 @@ public class system {
         });
     }
     public static void display(Global global) {
-        System.out.println("displayOutOfQueue");
         global.Frame.add(global);
         global.validate();
         global.Frame.setVisible(true);

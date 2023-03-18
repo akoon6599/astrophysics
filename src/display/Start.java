@@ -26,6 +26,7 @@ public class Start extends JFrame {
     ArrayList<StellarBody> Bodies;
     ArrayList<StellarBody> initialBodies = new ArrayList<>();
     ArrayList<JComponent> components = new ArrayList<>();
+    private final Icon settingsIcon = new ImageIcon("./src/display/settingsCog.png");
     public Start(ArrayList<StellarBody> Bodies) {
         this.Bodies = Bodies;
         for (StellarBody b : Bodies) {
@@ -39,7 +40,6 @@ public class Start extends JFrame {
     }
     public void reset() {
         Bodies.clear();
-//        Bodies = initialBodies;
         for (StellarBody b : initialBodies) {
             Bodies.add(b.clone());
         }
@@ -51,13 +51,14 @@ public class Start extends JFrame {
         components.add(addBBody);
         addBBody.addActionListener(e -> new AddBody().setVisible(true));
         ArrayList<JButton> bodyButtons = new ArrayList<>();
-        ArrayList<Circle> bodyDisplays = new ArrayList<>();
         ArrayList<JLabel> bodyLabels = new ArrayList<>();
+
+        JButton settingsBtn = new JButton(settingsIcon);
+        settingsBtn.setSize(new Dimension(16,16));
+        settingsBtn.addActionListener(e -> new Settings().setVisible(true));
 
         for (StellarBody body : Bodies) {
             bodyButtons.add(new JButton(body.Title));
-            bodyDisplays.add(new Circle(0, 0,
-                                        body.Radius,body.Radius));
             bodyLabels.add(new JLabel(
                     String.format("Angle: %.2f -- Magnitude: %.3f -- Classification: %s -- Mass: %.0fkg -- Pos (X,Y): (%.0f, %.0f) -- Anchor: %s",
                             body.Movement.coefficient(), body.Movement.getMagnitude(), body.Classification, body.Mass, body.Position.get(0), body.Position.get(1), body.STATIC)));
@@ -78,10 +79,6 @@ public class Start extends JFrame {
         for (JButton c : bodyButtons) {
             tmpBButtons.addComponent(c);
             components.add(c);}
-        GroupLayout.ParallelGroup tmpBBodies = layout.createParallelGroup(LEADING);
-        for (Circle c : bodyDisplays) {
-            tmpBBodies.addComponent(c);
-            components.add(c);}
         GroupLayout.ParallelGroup tmpBLabels = layout.createParallelGroup(LEADING);
         for (JLabel c : bodyLabels) {
             tmpBLabels.addComponent(c);
@@ -95,36 +92,46 @@ public class Start extends JFrame {
                 throw new RuntimeException(ex);
             }
         });
-        bodyField.addGroup(tmpBButtons).addGroup(tmpBBodies).addGroup(tmpBLabels); // HORIZONTAL
+
+
+        JLabel INFO = new JLabel("Click to Remove");
+        bodyField.addGroup(tmpBButtons).addGroup(tmpBLabels); // HORIZONTAL
         layout.setHorizontalGroup(
                 layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                         .addGroup(layout.createSequentialGroup()
                                 .addContainerGap()
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                        .addComponent(addBBody)
-                                        .addGroup(bodyField))
+                                        .addComponent(INFO)
+                                        .addGroup(bodyField)
+                                        .addComponent(settingsBtn))
                                 .addGap(0,PREF_X-100,PREF_X-50)
+                                .addGroup(layout.createParallelGroup(LEADING)
                                 .addComponent(Simulate)
+                                .addComponent(addBBody))
         ));
 
         GroupLayout.SequentialGroup pBodyField = layout.createSequentialGroup() // VERTICAL
                 .addContainerGap()
-                .addComponent(addBBody)
+                .addGroup(layout.createParallelGroup(TRAILING)
+                    .addComponent(INFO)
+                    .addComponent(addBBody))
                 .addGap(30,30,30);
         ArrayList<GroupLayout.ParallelGroup> help = new ArrayList<>();
         for (JButton c: bodyButtons) {
             help.add(layout.createParallelGroup(BASELINE)
                     .addComponent(c)
-                    .addComponent(bodyDisplays.get(bodyButtons.indexOf(c)))
                     .addComponent(bodyLabels.get(bodyButtons.indexOf(c)))
                     .addGap(5,10,25));
         }
         help.forEach(pBodyField::addGroup);
         pBodyField.addContainerGap((int)(PREF_Y*0.2), Short.MAX_VALUE);
         layout.setVerticalGroup(layout.createSequentialGroup()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(layout.createParallelGroup(LEADING)
                         .addGroup(pBodyField))
-                .addComponent(Simulate));
+                .addGroup(layout.createParallelGroup(LEADING)
+                        .addComponent(settingsBtn)
+                        .addComponent(Simulate))
+        );
     }
 
     public void refresh() {
@@ -179,7 +186,6 @@ public class Start extends JFrame {
             JLabel ancText = new JLabel("Anchor: ");
             JLabel errorText = new JLabel("");
 
-            // TODO: add button interaction logic -- what does this mean???
             finalize.addActionListener(e -> {
                 try {
                     StellarBody nB = AddBody.this.finalize_body();
@@ -332,6 +338,63 @@ public class Start extends JFrame {
                 return null;
             }
         }
+    }
+    class Settings extends JFrame {
+        protected static final int PREF_X = 880;
+        protected static final int PREF_Y = 140;
+        GroupLayout layout;
+        JButton rtn = new JButton("Accept");
+        JButton cncl = new JButton("Cancel");
+        JTextField timeField = new JTextField(4);
+        JTextField delayField = new JTextField(4);
+        JTextField dilationField = new JTextField(4);
+
+        public Settings() {
+            layout = new GroupLayout(getContentPane());
+            getContentPane().setLayout(layout);
+            layout.setAutoCreateGaps(true);
+            layout.setAutoCreateContainerGaps(true);
+            cncl.addActionListener(e -> Settings.this.dispose());
+            this.setSize(PREF_X,PREF_Y);
+            this.setLocationRelativeTo(null);
+
+            JLabel timeLabel = new JLabel("Length of Simulation (s):");
+            JLabel delayLabel = new JLabel("Delay Between Frames (ms):");
+            JLabel dilationLabel = new JLabel("Time Dilation (x):");
+            JLabel dilationNote = new JLabel("NOTE: between .05 and 5 is the");
+            JLabel dilationNote2 = new JLabel("recommended range for Time Dilation.");
+        //TODO: make the actual settings do the settings LMFAO
+            layout.setHorizontalGroup(layout.createSequentialGroup() // HORIZONTAL
+                    .addGroup(layout.createParallelGroup(LEADING)
+                            .addComponent(dilationLabel)
+                            .addComponent(dilationNote)
+                            .addComponent(dilationNote2)
+                            .addComponent(cncl))
+                    .addComponent(dilationField)
+                    .addGap(15)
+                    .addComponent(timeLabel)
+                    .addComponent(timeField)
+                    .addGap(15)
+                    .addComponent(delayLabel)
+                    .addGroup(layout.createParallelGroup(TRAILING)
+                            .addComponent(delayField)
+                            .addComponent(rtn))
+            );
+            layout.setVerticalGroup(layout.createSequentialGroup()
+                    .addGroup(layout.createParallelGroup(LEADING)
+                            .addComponent(dilationLabel)
+                            .addComponent(dilationField)
+                            .addComponent(timeLabel)
+                            .addComponent(timeField)
+                            .addComponent(delayLabel)
+                            .addComponent(delayField))
+                    .addComponent(dilationNote)
+                    .addComponent(dilationNote2)
+                    .addGroup(layout.createParallelGroup(LEADING)
+                            .addComponent(cncl)
+                            .addComponent(rtn)));
+        }
+
     }
 }
 

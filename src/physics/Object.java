@@ -35,8 +35,8 @@ public class Object {
         return InitialMass;
     }
 
-    public void move(double time_step) {
-        Double[] mv = this.Movement.evaluate(time_step);
+    public void move(double time_step, double dist_scale) {
+        Double[] mv = this.Movement.evaluate(time_step, dist_scale);
         this.Position.set(0, this.Position.get(0) + mv[0].floatValue());
         this.Position.set(1, this.Position.get(1) + mv[1].floatValue());
     }

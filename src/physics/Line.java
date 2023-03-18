@@ -24,7 +24,6 @@ public class Line {
         if (angle < 0) {
             angle += 360;
         }
-
         this.Movement = new Movement(String.format("%.2fd", angle), 0.00);
     }
     public Line(ArrayList<Float> Start, ArrayList<Float> End, float[] CENTER, float RADIUS) {

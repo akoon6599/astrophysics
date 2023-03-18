@@ -13,8 +13,8 @@ import java.util.LinkedList;
 import java.util.Objects;
 
 class GlobalFrame extends JFrame {
-    protected static final int PREF_X = 1440;
-    protected static final int PREF_Y = 1080;
+    int PREF_X = 1440;
+    int PREF_Y = 1080;
     @Override
     public Dimension getPreferredSize() {
         if (isPreferredSizeSet()) {return super.getPreferredSize();}
@@ -25,8 +25,8 @@ class GlobalFrame extends JFrame {
 }
 
 public class Global extends JPanel {
-    protected static final int PREF_X = 1440;
-    protected static final int PREF_Y = 1080;
+    protected int PREF_X = 1440;
+    protected int PREF_Y = 1080;
     public ArrayList<MyShape> Shapes = new ArrayList<>();
     public final JFrame Frame;
     public boolean SimComplete = false;
@@ -45,9 +45,19 @@ public class Global extends JPanel {
     }
 
     public Global(ArrayList<StellarBody> bodies, Start start) { // all-purpose
+
         this.Frame = new GlobalFrame();
         this.Frame.getContentPane().add(this);
         this.Bodies = bodies;
+
+        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+        Insets scnMax = Toolkit.getDefaultToolkit().getScreenInsets(getGraphicsConfiguration());
+        int taskBarSize = scnMax.bottom;
+        this.PREF_X = screenSize.width - getWidth();
+        this.PREF_Y = screenSize.height - taskBarSize - getHeight();
+        ((GlobalFrame) this.Frame).PREF_X = this.PREF_X;
+        ((GlobalFrame) this.Frame).PREF_Y = this.PREF_Y;
+
         this.Bodies.forEach(this::displayBody);
         this.setPreferredSize(new Dimension(PREF_X, PREF_Y));
         this.Frame.setTitle("Simulation");
@@ -59,11 +69,21 @@ public class Global extends JPanel {
             this.reset(start);
         });
         this.Frame.setResizable(false);
+
     }
     public Global(ArrayList<StellarBody> bodies) { // meant for previewMovement only
         this.Frame = new GlobalFrame();
         this.Frame.getContentPane().add(this);
         this.Bodies = bodies;
+
+        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+        Insets scnMax = Toolkit.getDefaultToolkit().getScreenInsets(getGraphicsConfiguration());
+        int taskBarSize = scnMax.bottom;
+        this.PREF_X = screenSize.width - getWidth();
+        this.PREF_Y = screenSize.height - taskBarSize - getHeight();
+        ((GlobalFrame) this.Frame).PREF_X = this.PREF_X;
+        ((GlobalFrame) this.Frame).PREF_Y = this.PREF_Y;
+
         this.Bodies.forEach(this::displayBody);
         this.setPreferredSize(new Dimension(PREF_X, PREF_Y));
         returnToMainMenu.setText("Close Preview");
@@ -81,7 +101,7 @@ public class Global extends JPanel {
 
     public void previewMovement(StellarBody obj) {
         StellarBody tempObj = obj.clone();
-        tempObj.move(Math.max(obj.Radius/obj.Movement.getMagnitude()*1.5f,system.TimeScale*5));
+        tempObj.move(Math.max(obj.Radius/obj.Movement.getMagnitude()*1.5f,system.TimeScale*5),system.DistScale);
         this.g2 = (Graphics2D) this.Frame.getGraphics();
         assert this.g2 != null;
 
@@ -116,11 +136,11 @@ public class Global extends JPanel {
             Shapes.add(newShape);
         }
     }
-    public void move(StellarBody obj, Double TimeScale) {
+    public void move(StellarBody obj, Double TimeScale, Double DistanceScale) {
             for (MyShape shape : this.Shapes) {
                 if (shape.Title.equals(obj.Title) && !shape.isCollided) {
-                    obj.move(TimeScale);
-                    Double[] mv = obj.Movement.evaluate(TimeScale);
+                    obj.move(TimeScale,DistanceScale);
+                    Double[] mv = obj.Movement.evaluate(TimeScale, DistanceScale);
                     shape.translate(mv[0], mv[1]);
                 }
             }
@@ -170,6 +190,7 @@ public class Global extends JPanel {
                             obj.PositionHistory.add(new Double[] {
                                     obj.PosX+obj.Shape.getBounds().width/2.0, obj.PosY+obj.Shape.getBounds().width/2.0, 1.0
                             });
+                            bodies.remove(secondaryBody);
                         }
                         else if (mainBody.Mass < secondaryBody.Mass) {
                             obj.isCollided = true;
@@ -178,6 +199,7 @@ public class Global extends JPanel {
                             shape.PositionHistory.add(new Double[] {
                                     shape.PosX+shape.Shape.getBounds().width/2.0, shape.PosY+shape.Shape.getBounds().width/2.0, 1.0
                             });
+                            bodies.remove(mainBody);
                         }
                     }
                     Check.add(String.format("%s->%s", obj.Title, shape.Title));
