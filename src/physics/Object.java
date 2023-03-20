@@ -18,6 +18,14 @@ public class Object {
         this.Movement = new Movement(angle, mag);
         this.InitialMovement = this.Movement;
     }
+    public void overrideInitialMovement(Movement mv) { // Only to be used for finalize_body()
+        InitialMovement = mv;
+    }
+    public void overrideInitialPosition(ArrayList<Float> pos) {
+        InitialPosition = new ArrayList<>(2);
+        InitialPosition.add(pos.get(0));
+        InitialPosition.add(pos.get(1));
+    }
     public void reset() throws ExecutionControl.NotImplementedException {
         this.Position = InitialPosition;
         this.Movement = InitialMovement;
@@ -35,8 +43,8 @@ public class Object {
         return InitialMass;
     }
 
-    public void move(double time_step, double dist_scale) {
-        Double[] mv = this.Movement.evaluate(time_step, dist_scale);
+    public void move(Double TimeScale) {
+        Double[] mv = this.Movement.evaluate(TimeScale);
         this.Position.set(0, this.Position.get(0) + mv[0].floatValue());
         this.Position.set(1, this.Position.get(1) + mv[1].floatValue());
     }

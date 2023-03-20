@@ -2,7 +2,6 @@ package display;
 
 import physics.Line;
 import physics.StellarBody;
-import physics.system;
 
 import javax.swing.*;
 import java.awt.*;
@@ -31,8 +30,10 @@ public class Global extends JPanel {
     public final JFrame Frame;
     public boolean SimComplete = false;
     private final ArrayList<StellarBody> Bodies;
+    private ArrayList<StellarBody> CollidedBodies = new ArrayList<>();
     protected Graphics2D g2;
     protected final LinkedList<Line> Lines = new LinkedList<>();
+    public ArrayList<JLabel> velocityLabels = new ArrayList<>();
     private final JButton returnToMainMenu = new JButton("Exit To Menu");
     public void reset(Start start) {
         Shapes.clear();
@@ -41,57 +42,62 @@ public class Global extends JPanel {
             this.Bodies.add(b.clone());
         }
 
-        this.Frame.dispose();
+        Frame.dispose();
     }
 
     public Global(ArrayList<StellarBody> bodies, Start start) { // all-purpose
 
-        this.Frame = new GlobalFrame();
-        this.Frame.getContentPane().add(this);
+        Frame = new GlobalFrame();
+        Frame.getContentPane().add(this);
         this.Bodies = bodies;
 
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
         Insets scnMax = Toolkit.getDefaultToolkit().getScreenInsets(getGraphicsConfiguration());
         int taskBarSize = scnMax.bottom;
-        this.PREF_X = screenSize.width - getWidth();
-        this.PREF_Y = screenSize.height - taskBarSize - getHeight();
-        ((GlobalFrame) this.Frame).PREF_X = this.PREF_X;
-        ((GlobalFrame) this.Frame).PREF_Y = this.PREF_Y;
+        PREF_X = screenSize.width - getWidth();
+        PREF_Y = screenSize.height - taskBarSize - getHeight();
+        ((GlobalFrame) Frame).PREF_X = PREF_X;
+        ((GlobalFrame) Frame).PREF_Y = PREF_Y;
+
+        setLayout(null);
 
         this.Bodies.forEach(this::displayBody);
-        this.setPreferredSize(new Dimension(PREF_X, PREF_Y));
-        this.Frame.setTitle("Simulation");
-        this.Frame.pack();
+        setPreferredSize(new Dimension(PREF_X, PREF_Y));
+        Frame.setTitle("Simulation");
+        Frame.pack();
 
+        returnToMainMenu.setFont(new Font("Times New Roman",Font.BOLD,16));
         returnToMainMenu.addActionListener(e -> {
             start.setVisible(true);
             start.reset();
             this.reset(start);
         });
-        this.Frame.setResizable(false);
+        Frame.setResizable(false);
 
     }
     public Global(ArrayList<StellarBody> bodies) { // meant for previewMovement only
-        this.Frame = new GlobalFrame();
-        this.Frame.getContentPane().add(this);
+        Frame = new GlobalFrame();
+        Frame.getContentPane().add(this);
         this.Bodies = bodies;
 
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
         Insets scnMax = Toolkit.getDefaultToolkit().getScreenInsets(getGraphicsConfiguration());
         int taskBarSize = scnMax.bottom;
-        this.PREF_X = screenSize.width - getWidth();
-        this.PREF_Y = screenSize.height - taskBarSize - getHeight();
-        ((GlobalFrame) this.Frame).PREF_X = this.PREF_X;
-        ((GlobalFrame) this.Frame).PREF_Y = this.PREF_Y;
+        PREF_X = screenSize.width - getWidth();
+        PREF_Y = screenSize.height - taskBarSize - getHeight();
+        ((GlobalFrame) Frame).PREF_X = PREF_X;
+        ((GlobalFrame) Frame).PREF_Y = PREF_Y;
 
         this.Bodies.forEach(this::displayBody);
-        this.setPreferredSize(new Dimension(PREF_X, PREF_Y));
+        setPreferredSize(new Dimension(PREF_X, PREF_Y));
         returnToMainMenu.setText("Close Preview");
+        returnToMainMenu.setFont(new Font("Times New Roman",Font.BOLD,16));
         returnToMainMenu.addActionListener(e -> this.Frame.dispose());
+        returnToMainMenu.setBounds(PREF_X/2-40,10,80,20);
         this.add(returnToMainMenu);
-        this.Frame.setTitle("Preview Movement");
-        this.Frame.pack();
-        this.Frame.setResizable(false);
+        Frame.setTitle("Preview Movement");
+        Frame.pack();
+        Frame.setResizable(false);
     }
     @Override
     public Dimension getPreferredSize() {
@@ -101,8 +107,8 @@ public class Global extends JPanel {
 
     public void previewMovement(StellarBody obj) {
         StellarBody tempObj = obj.clone();
-        tempObj.move(Math.max(obj.Radius/obj.Movement.getMagnitude()*1.5f,system.TimeScale*5),system.DistScale);
-        this.g2 = (Graphics2D) this.Frame.getGraphics();
+        tempObj.move(10.0);
+        this.g2 = (Graphics2D) Frame.getGraphics();
         assert this.g2 != null;
 
         float[] CENTER = new float[2];
@@ -135,20 +141,25 @@ public class Global extends JPanel {
         if (!Found) {
             Shapes.add(newShape);
         }
+
+        JLabel velocity = new JLabel(String.format("%.2fkm/s",obj.Movement.getMagnitude()));
+        velocity.setFont(new Font("Times New Roman",Font.PLAIN,12));
+        velocity.setBounds(PREF_X/2+obj.Position.get(0).intValue()+obj.Radius+10, PREF_Y/2+obj.Position.get(1).intValue()-(obj.Radius*2)-10, 80,20);
+        velocityLabels.add(velocity);
     }
-    public void move(StellarBody obj, Double TimeScale, Double DistanceScale) {
-            for (MyShape shape : this.Shapes) {
+    public void move(StellarBody obj, Double TimeScale) {
+            for (MyShape shape : Shapes) {
                 if (shape.Title.equals(obj.Title) && !shape.isCollided) {
-                    obj.move(TimeScale,DistanceScale);
-                    Double[] mv = obj.Movement.evaluate(TimeScale, DistanceScale);
+                    obj.move(TimeScale);
+                    Double[] mv = obj.Movement.evaluate(TimeScale);
                     shape.translate(mv[0], mv[1]);
                 }
             }
     }
     public void collision(ArrayList<StellarBody> bodies) { // Goes through `bodies` and checks each for a collision
         ArrayList<String> Check = new ArrayList<>();
-        for (MyShape obj : this.Shapes) {
-            for (MyShape shape : this.Shapes) {
+        for (MyShape obj : Shapes) {
+            for (MyShape shape : Shapes) {
                 if (!Objects.equals(shape.Title, obj.Title) &&
                         !(Check.contains(String.format("%s->%s", shape.Title, obj.Title)) ||
                         Check.contains(String.format("%s->%s", obj.Title, shape.Title))) &&
@@ -190,6 +201,7 @@ public class Global extends JPanel {
                             obj.PositionHistory.add(new Double[] {
                                     obj.PosX+obj.Shape.getBounds().width/2.0, obj.PosY+obj.Shape.getBounds().width/2.0, 1.0
                             });
+                            CollidedBodies.add(secondaryBody);
                             bodies.remove(secondaryBody);
                         }
                         else if (mainBody.Mass < secondaryBody.Mass) {
@@ -199,6 +211,7 @@ public class Global extends JPanel {
                             shape.PositionHistory.add(new Double[] {
                                     shape.PosX+shape.Shape.getBounds().width/2.0, shape.PosY+shape.Shape.getBounds().width/2.0, 1.0
                             });
+                            CollidedBodies.add(mainBody);
                             bodies.remove(mainBody);
                         }
                     }
@@ -210,8 +223,8 @@ public class Global extends JPanel {
     @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
-        this.g2 = g!=null?(Graphics2D)g:this.g2;
-//        this.g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2 = g!=null?(Graphics2D)g:g2;
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         if (!Lines.isEmpty()) {
             for (Line line : Lines) {
                 g2.setColor(Color.BLUE);
@@ -222,22 +235,25 @@ public class Global extends JPanel {
             }
         }
         for (MyShape shape : Shapes) {
-            shape.draw(this.g2, false);
+            shape.draw(g2, false);
         }
-        if (this.SimComplete) {
-            for (StellarBody body : this.Bodies) {
-                this.drawHistory(this.g2, body);
+        if (SimComplete) {
+            for (StellarBody body : Bodies) {
+                drawHistory(g2, body);
+            }
+            for (StellarBody body : CollidedBodies) {
+                drawHistory(g2, body);
             }
         }
     }
 
     public void refresh() { // refreshes the canvas in real-time. god this took me ages to find the solution to
-        paintImmediately(0,0,this.getWidth(),this.getHeight());
-        this.revalidate();
+        paintImmediately(0,0,getWidth(),getHeight());
+        revalidate();
     }
     public void drawHistory(Graphics2D g2, StellarBody obj) {
-        for (MyShape shape : this.Shapes) {
-            if (!obj.Title.equals("Sun") && !shape.Title.equals("Sun")) {
+        for (MyShape shape : Shapes) {
+//            if (!obj.Title.equals("Sun") && !shape.Title.equals("Sun")) {
                 if (shape.Title.equals(obj.Title)) {
                     Iterator<Double[]> it = shape.PositionHistory.iterator();
                     Double[] prevPosition = {0.0, 0.0, 0.0};
@@ -272,17 +288,18 @@ public class Global extends JPanel {
                         i++;
                         prevPosition = curPosition;
                     }
-                }
+//                }
             }
             shape.draw(g2, true);
         }
+        returnToMainMenu.setBounds(PREF_X/2-80,20,160,40);
         this.add(returnToMainMenu);
     }
     public void line(Double[] Start, Double[] End) {
-        this.g2.drawLine(Start[0].intValue(),Start[1].intValue(), End[0].intValue(),End[1].intValue());
+        g2.drawLine(Start[0].intValue(),Start[1].intValue(), End[0].intValue(),End[1].intValue());
     }
     public void line(ArrayList<Float> Start, ArrayList<Float> End)  {
-        this.g2.drawLine(Start.get(0).intValue(),Start.get(1).intValue(), End.get(0).intValue(),End.get(1).intValue());
+        g2.drawLine(Start.get(0).intValue(),Start.get(1).intValue(), End.get(0).intValue(),End.get(1).intValue());
     }
 }
 
@@ -301,46 +318,46 @@ class MyShape {
     public Color COLOR;
 
     public MyShape(String name, Shape shape, Color color){
-        this.Title = name;
+        Title = name;
         path.append(shape, true);
-        this.Shape = shape;
-        this.PosX = shape.getBounds().getMinX();
-        this.PosY = shape.getBounds().getMinY();
-        this.initialPosX = this.PosX;
-        this.initialPosY = this.PosY;
-        this.initialPath = this.path;
-        this.COLOR = color;
-        this.PositionHistory.add(new Double[]
-                {this.PosX+this.Shape.getBounds().width/2.0, this.PosY+this.Shape.getBounds().width/2.0,0.0});
+        Shape = shape;
+        PosX = shape.getBounds().getMinX();
+        PosY = shape.getBounds().getMinY();
+        initialPosX = PosX;
+        initialPosY = PosY;
+        initialPath = path;
+        COLOR = color;
+        PositionHistory.add(new Double[]
+                {PosX+Shape.getBounds().width/2.0, PosY+Shape.getBounds().width/2.0,0.0});
     }
     public void translate(Double deltaX, Double deltaY) {
         path.transform(AffineTransform.getTranslateInstance(deltaX, deltaY));
-        this.PosX += deltaX;
-        this.PosY += deltaY;
-        this.PositionHistory.add(new Double[]
-                {this.PosX+this.Shape.getBounds().width/2.0, this.PosY+this.Shape.getBounds().width/2.0,0.0});
+        PosX += deltaX;
+        PosY += deltaY;
+        PositionHistory.add(new Double[]
+                {PosX+Shape.getBounds().width/2.0, PosY+Shape.getBounds().width/2.0,0.0});
     }
     public void draw(Graphics2D g2, boolean isFinal) {
         if (!isFinal) {
-            if (!this.isCollided) {
+            if (!isCollided) {
                 g2.setColor(Color.BLACK);
                 g2.draw(path);
                 this.fill(g2);
             }
-            if (this.isCollided) {
+            if (isCollided) {
                 g2.setColor(Color.BLUE);
                 g2.draw(path);
             }
         }
         else {
-            if (this.isCollided) {
+            if (isCollided) {
                 g2.setColor(Color.BLUE);
                 g2.draw(path);
             }
         }
     }
     public void fill(Graphics2D g2) {
-        if (!this.isCollided) {
+        if (!isCollided) {
             g2.setColor(COLOR);
             g2.fill(path);
         }

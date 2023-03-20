@@ -2,6 +2,7 @@ package physics;
 
 import java.awt.Color;
 import java.sql.Time;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Objects;
 
@@ -12,93 +13,108 @@ public class StellarBody extends Object{
     public Color COLOR;
     public boolean STATIC;
     public boolean ORBITER;
-    public StellarBody orbitingBody = null;
+    public boolean TRACKVEL;
+    public StellarBody orbitingPoint = null;
+    public ArrayList<StellarBody> MOONS = new ArrayList<>();
 
 
 
-    public StellarBody(Float posx, Float posy, String ttl, String cls, Double mass, Integer radius, String angle, Double mag, Color color, boolean Static) {
+
+    public StellarBody(Float posx, Float posy, String ttl, String cls, Double mass, Integer radius, String angle, Double mag, Color color, boolean Static, boolean track) {
         super(angle, mag);
-        this.Classification = cls;
-        this.Position.add(posx);
-        this.Position.add(posy);
-        this.InitialPosition.add(posx);
-        this.InitialPosition.add(posy);
-        this.Title = ttl;
-        this.Mass = mass;
-        this.InitialMass = mass;
-        this.Radius = radius;
-        this.COLOR = color;
-        this.STATIC = Static;
-        this.ORBITER = false;
+        Classification = cls;
+        Position.add(posx);
+        Position.add(posy);
+        InitialPosition.add(posx);
+        InitialPosition.add(posy);
+        Title = ttl;
+        Mass = mass;
+        InitialMass = mass;
+        Radius = radius;
+        COLOR = color;
+        STATIC = Static;
+        TRACKVEL = track;
+        ORBITER = false;
     }
-    public StellarBody(Float posx, Float posy, String ttl, String cls, Double mass, Integer radius, String angle, Double mag, Color color, boolean Static, StellarBody orbitingBody) {
+    public StellarBody(Float posx, Float posy, String ttl, String cls, Double mass, Integer radius, String angle, Double mag, Color color, boolean Static, boolean track, StellarBody orbitingPoint) {
         super(angle, mag);
-        this.Classification = cls;
-        this.Position.add(posx);
-        this.Position.add(posy);
-        this.InitialPosition.add(posx);
-        this.InitialPosition.add(posy);
-        this.Title = ttl;
-        this.Mass = mass;
-        this.InitialMass = mass;
-        this.Radius = radius;
-        this.COLOR = color;
-        this.STATIC = Static;
-        this.ORBITER = true;
-        this.orbitingBody = orbitingBody;
+        Classification = cls;
+        Position.add(posx);
+        Position.add(posy);
+        InitialPosition.add(posx);
+        InitialPosition.add(posy);
+        Title = ttl;
+        Mass = mass;
+        InitialMass = mass;
+        Radius = radius;
+        COLOR = color;
+        STATIC = Static;
+        TRACKVEL = track;
+
+        ORBITER = true;
+        this.orbitingPoint = orbitingPoint;
+        orbitingPoint.MOONS.add(this);
     }
     @Override
     public StellarBody clone() {
-        return new StellarBody(this.getInitialPosition()[0], this.getInitialPosition()[1], this.Title,
-                this.Classification, this.getInitialMass(), this.Radius, this.getInitialMovement().getAngle(), this.getInitialMovement().getMagnitude(),
-                this.COLOR, this.STATIC);
+        if (!ORBITER) {
+            return new StellarBody(getInitialPosition()[0], getInitialPosition()[1], Title,
+                    Classification, getInitialMass(), Radius, getInitialMovement().getAngle(), getInitialMovement().getMagnitude(),
+                    COLOR, STATIC, TRACKVEL);
+        }
+        else {
+            return new StellarBody(getInitialPosition()[0], getInitialPosition()[1], Title,
+                    Classification, getInitialMass(), Radius, getInitialMovement().getAngle(), getInitialMovement().getMagnitude(),
+                    COLOR, STATIC, TRACKVEL, orbitingPoint);
+        }
     }
 
     public void effect_movement(StellarBody obj, Double TimeScale, Double DistanceScale) { // Called by main body, passes orbiter
         if (!obj.STATIC) {
-            if (!obj.ORBITER || ((Objects.nonNull(obj.orbitingBody)&&obj.orbitingBody == this))) {
-                Line gDirection = new Line(this, obj);
-                System.out.println(gDirection.Distance);
-                double gMagnitude = (GravConstant * (this.Mass * obj.Mass)) / Math.pow(gDirection.Distance * DistanceScale, 2) / 1e10 * (TimeScale / DistanceScale);
+            Line gDirection = new Line(this, obj);
+            double gMagnitude = (GravConstant * (this.Mass * obj.Mass)) / (Math.pow(gDirection.Distance, 2)*DistanceScale) * TimeScale;
+            double gAccel = gMagnitude/obj.Mass;
 
-                double gxMagnitude = gMagnitude * Math.cos(Math.toRadians(gDirection.Movement.coefficient()));
-                double gyMagnitude = gMagnitude * Math.sin(Math.toRadians(gDirection.Movement.coefficient()));
-                System.out.printf("GMAG;%s:%s,%s%n", obj.Title, gMagnitude, gxMagnitude);
 
-                double oxMagnitude = obj.Movement.xMove;
-                double oyMagnitude = obj.Movement.yMove;
+            double gxMagnitude = gAccel * Math.cos(Math.toRadians(gDirection.Movement.coefficient()));
+            double gyMagnitude = gAccel * Math.sin(Math.toRadians(gDirection.Movement.coefficient()));
 
-                double nxMagnitude = oxMagnitude + gxMagnitude;
-                double nyMagnitude = oyMagnitude + gyMagnitude;
-                double newAngle = Math.toDegrees(Math.atan2(nyMagnitude, nxMagnitude));
-                System.out.printf("NM:%s;%s:%s%n", oyMagnitude, gyMagnitude, nyMagnitude);
-                Double nMagnitudePrimary = nyMagnitude / Math.sin(Math.toRadians(newAngle)); // Redundant creations for nMagnitude
-                Double nMagnitudeSecondary = nxMagnitude / Math.cos(Math.toRadians(newAngle)); // Just because I can and also for accuracy
-                Double nMagnitudeTertiary = Math.sqrt(Math.pow(nxMagnitude, 2) + Math.pow(nyMagnitude, 2));
-                double nMagnitude;
-                if (Math.abs(nMagnitudePrimary - nMagnitudeSecondary) < nMagnitudePrimary * (1e-4) &&
-                        Math.abs(nMagnitudePrimary - nMagnitudeTertiary) < nMagnitudePrimary * (1e-4)) {
-                    nMagnitude = nMagnitudePrimary;
-                } else {
-                    nMagnitude = 0;
-                    System.out.printf("MAGNITUDE ERROR BODY %s %s:%s:%s%n", obj.Title, nMagnitudePrimary, nMagnitudeSecondary, nMagnitudeTertiary);
-                }
-                obj.Movement = new Movement(String.format("%.2fd", newAngle), nMagnitude);
-                if (!this.STATIC) {
-                    System.out.printf("EMS;%s:%s%n", obj.Title, nMagnitude);
-                    System.out.printf("MAG:[%s,%s]%n", nxMagnitude, nyMagnitude);
-                }
+            double oxMagnitude = obj.Movement.xMove;
+            double oyMagnitude = obj.Movement.yMove;
+
+            double nxMagnitude = oxMagnitude + gxMagnitude;
+            double nyMagnitude = oyMagnitude + gyMagnitude;
+            double newAngle = Math.toDegrees(Math.atan2(nyMagnitude, nxMagnitude));
+
+            Double nMagnitudePrimary = nyMagnitude / Math.sin(Math.toRadians(newAngle)); // Redundant creations for nMagnitude
+            Double nMagnitudeSecondary = nxMagnitude / Math.cos(Math.toRadians(newAngle)); // Just because I can and also for accuracy
+            Double nMagnitudeTertiary = Math.sqrt(Math.pow(nxMagnitude, 2) + Math.pow(nyMagnitude, 2));
+
+            double nMagnitude;
+            if (Math.abs(nMagnitudePrimary - nMagnitudeSecondary) < nMagnitudePrimary * (1e-4)) {
+                nMagnitude = nMagnitudePrimary;
+            } else if (Math.abs(nMagnitudePrimary - nMagnitudeTertiary) < nMagnitudePrimary * (1e-4)) {
+                nMagnitude = nMagnitudeSecondary;
+                System.out.printf("MAGNITUDE ERROR LV1 BODY %s %s:%s:%s%n", obj.Title, nMagnitudePrimary, nMagnitudeSecondary, nMagnitudeTertiary);
+            } else {
+                nMagnitude = nMagnitudeTertiary;
+                System.out.printf("MAGNITUDE ERROR LV2 BODY %s %s:%s:%s%n", obj.Title, nMagnitudePrimary, nMagnitudeSecondary, nMagnitudeTertiary);
             }
+
+            obj.Movement = new Movement(String.format("%.2fd", newAngle), nMagnitude);
         }
     }
 
-    public void find_orbit(StellarBody obj, Double DistanceScale, Double TimeScale) { // Called by main body, passes orbiter - requires a relative 90-degree angle between orbiter motion and main body
+    public void find_orbit(StellarBody obj, Double DistanceScale) { // Called by main body, passes orbiter - requires a relative 90-degree angle between orbiter motion and main body
         Line Tether = new Line(this, obj);
         double gMagnitude = (GravConstant * this.Mass) / (Tether.Distance*DistanceScale);
         double rV = Math.sqrt(gMagnitude);
-        System.out.printf("FO:%s:%s%n",obj.Title,rV);
         obj.Movement.setMagnitude(rV);
     }
+
+//    public void orbitPoint(StellarBody obj, double[] Point) {
+//        StellarBody fakeBody = new StellarBody(Point[0], Point[1], "HIDDEN", "NULL")
+//    }
 }
 
 

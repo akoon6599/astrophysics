@@ -15,13 +15,9 @@ public class Movement {
         this.yMove = Math.sin(Math.toRadians(this.coefficient()))*this.Magnitude;
     }
 
-    public Double[] evaluate(Double TimeScale, double DistanceScale) { // refreshes the xMove and yMove variables, does not do anything physics-side
+    public Double[] evaluate(Double TimeScale) { // refreshes the xMove and yMove variables, does not do anything physics-side
         double angle = Math.toRadians(this.coefficient());
-//        this.xMove = Math.cos(angle) * this.Magnitude;
-//        this.yMove = Math.sin(angle) * this.Magnitude;
-//        System.out.println(Arrays.toString(new Double[]{this.xMove * TimeScale / DistanceScale, this.yMove * TimeScale / DistanceScale}));
-        return new Double[] {Math.cos(angle) * this.Magnitude*TimeScale/DistanceScale, Math.sin(angle) * this.Magnitude*TimeScale/DistanceScale};
-//        return new Double[] {this.xMove*0.01, this.yMove*0.01};
+        return new Double[] {Math.cos(angle) * this.Magnitude * TimeScale, Math.sin(angle) * this.Magnitude * TimeScale};
     }
 
     public void setMagnitude(Double mg) {
