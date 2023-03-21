@@ -7,11 +7,8 @@ import physics.system;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.FocusAdapter;
-import java.awt.event.FocusEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.geom.Ellipse2D;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Objects;
@@ -32,7 +29,7 @@ public class Start extends JFrame {
     ArrayList<StellarBody> initialBodies = new ArrayList<>();
     ArrayList<JComponent> components;
     ArrayList<JButton> bodyButtons;
-    private final Icon settingsIcon = new ImageIcon("./src/display/settingsCog.png");
+    private final Icon settingsIcon = new ImageIcon(Objects.requireNonNull(getClass().getResource("settingsCog.png")));
     public Start(ArrayList<StellarBody> Bodies) {
         this.Bodies = Bodies;
         for (StellarBody b : Bodies) {
@@ -71,10 +68,8 @@ public class Start extends JFrame {
                     String.format("Angle: %.2f -- Velocity: %.3f km/s-- Classification: %s -- Mass: %.3fe24 kg -- Pos (X,Y): (%.0f, %.0f) px -- Anchor: %s",
                             body.Movement.coefficient(), body.Movement.getMagnitude(), body.Classification, body.Mass/1e24, body.Position.get(0), body.Position.get(1), body.STATIC)));
         }
-        for (JButton btn : (ArrayList<JButton>)bodyButtons.clone()) {
-            btn.addActionListener(e -> {
-                new AddBody(Start.this.Bodies.get(bodyButtons.indexOf(btn))).setVisible(true);
-            });
+        for (JButton btn : new ArrayList<>(bodyButtons)) {
+            btn.addActionListener(e -> new AddBody(Start.this.Bodies.get(bodyButtons.indexOf(btn))).setVisible(true));
         }
 
 
@@ -156,7 +151,6 @@ public class Start extends JFrame {
             return new Dimension(PREF_X, PREF_Y);
         }
 
-        // determine interactables - here for use in finalize_body
         JButton rtn = new JButton("Return to Menu");
         JTextField angle = new JTextField(6);
         JTextField magnitude = new JTextField(6);
@@ -231,10 +225,8 @@ public class Start extends JFrame {
 
             String[] Choices = new String[Start.this.Bodies.size()];
             Choices[0] = "None";
-            System.out.println(Start.this.Bodies.size());
             int missed = 0;
             for (int i=0;i < Start.this.Bodies.size(); i++) {
-                System.out.printf(":%s%n",AddBody.this.title.getText());
                 if (!Start.this.Bodies.get(i).Title.equals(AddBody.this.title.getText())) Choices[i+1-missed] = Start.this.Bodies.get(i).Title;
                 else missed++;
             }
@@ -272,7 +264,7 @@ public class Start extends JFrame {
                     dispose();
                 }
                 catch (NumberFormatException exception) {
-                    errorText.setText(String.format("Erorr: %s",exception.getMessage()));
+                    errorText.setText(String.format("Error: %s",exception.getMessage()));
                 }
             });
 
@@ -299,7 +291,7 @@ public class Start extends JFrame {
                     system.display(GLOBAL);
                     GLOBAL.previewMovement(displayBodies);
                 } catch (NumberFormatException exception) {
-                    errorText.setText(String.format("Erorr: %s",exception.getMessage()));
+                    errorText.setText(String.format("Error: %s",exception.getMessage()));
                 }
             });
             position.addActionListener(e -> {
@@ -321,7 +313,7 @@ public class Start extends JFrame {
                         }
                     });
                 } catch (NumberFormatException exception) {
-                    errorText.setText(String.format("Erorr: %s",exception.getMessage()));
+                    errorText.setText(String.format("Error: %s",exception.getMessage()));
                 }
             });
 
@@ -352,11 +344,7 @@ public class Start extends JFrame {
             remove.addActionListener(e -> {
                 Start.this.Bodies.remove(oldBody);
                 Start.this.initialBodies.remove(oldBody);
-                for (JButton btn : (ArrayList<JButton>)bodyButtons.clone()) {
-                    if (String.valueOf(btn.getText()).equals(oldBody.Title)) {
-                        bodyButtons.remove(btn);
-                    }
-                }
+                bodyButtons.removeIf(btn -> String.valueOf(btn.getText()).equals(oldBody.Title));
                 Start.this.refresh();
                 Start.this.toFront();
                 Start.this.requestFocus();
@@ -517,7 +505,7 @@ public class Start extends JFrame {
                     dispose();
                 }
                 catch (NumberFormatException exception) {
-                    errorText.setText(String.format("Erorr: %s",exception.getMessage()));
+                    errorText.setText(String.format("Error: %s",exception.getMessage()));
                 }
             });
 
@@ -633,7 +621,7 @@ public class Start extends JFrame {
                     system.display(GLOBAL);
                     GLOBAL.previewMovement(displayBodies);
                 } catch (NumberFormatException exception) {
-                    errorText.setText(String.format("Erorr: %s",exception.getMessage()));
+                    errorText.setText(String.format("Error: %s",exception.getMessage()));
                 }
             });
             position.addActionListener(e -> {
@@ -655,7 +643,7 @@ public class Start extends JFrame {
                         }
                     });
                 } catch (NumberFormatException exception) {
-                    errorText.setText(String.format("Erorr: %s",exception.getMessage()));
+                    errorText.setText(String.format("Error: %s",exception.getMessage()));
                 }
             });
             anchor.addActionListener(e -> {
@@ -888,7 +876,7 @@ public class Start extends JFrame {
         protected static final int PREF_Y = 140;
         GroupLayout layout;
         JButton rtn = new JButton("Accept");
-        JButton cncl = new JButton("Cancel");
+        JButton cancel = new JButton("Cancel");
         JTextField timeField = new JTextField(4);
         JTextField delayField = new JTextField(4);
         JTextField dilationField = new JTextField(4);
@@ -899,7 +887,7 @@ public class Start extends JFrame {
             layout.setAutoCreateGaps(true);
             layout.setAutoCreateContainerGaps(true);
             rtn.addActionListener(e -> Settings.this.closeSettings());
-            cncl.addActionListener(e -> {
+            cancel.addActionListener(e -> {
                         Start.this.toFront();
                         Start.this.requestFocus();
                         dispose();
@@ -923,7 +911,7 @@ public class Start extends JFrame {
                                 .addComponent(dilationLabel)
                                 .addComponent(dilationNote)
                                 .addComponent(dilationNote2)
-                                .addComponent(cncl))
+                                .addComponent(cancel))
                         .addComponent(dilationField)
                         .addGap(15)
                         .addComponent(timeLabel)
@@ -945,7 +933,7 @@ public class Start extends JFrame {
                         .addComponent(dilationNote)
                         .addComponent(dilationNote2)
                         .addGroup(layout.createParallelGroup(LEADING)
-                                .addComponent(cncl)
+                                .addComponent(cancel)
                                 .addComponent(rtn)));
             }
         }
@@ -984,29 +972,5 @@ public class Start extends JFrame {
             Settings.this.dispose();
         }
 
-    }
-}
-
-
-class Circle extends JComponent{
-
-    private final int height;
-    private final int width;
-    private final int xPos;
-    private final int yPos;
-
-    public Circle(int x,int y,int height,int width) {
-        this.height = height;
-        this.width = width;
-        xPos = x;
-        yPos = y;
-    }
-
-    public void paintComponent(Graphics g) {
-        Graphics2D g2 = (Graphics2D)g;
-        Ellipse2D.Double ellipse = new Ellipse2D.Double(xPos,yPos,width,height);
-        g2.draw(ellipse);
-        g2.setColor(Color.black);
-        g2.fill(ellipse);
     }
 }
