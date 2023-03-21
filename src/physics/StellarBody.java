@@ -1,10 +1,9 @@
 package physics;
 
+import display.MyShape;
+
 import java.awt.Color;
-import java.sql.Time;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Objects;
 
 public class StellarBody extends Object{
     static final Double GravConstant = 6.674*Math.pow(10, -11);
@@ -16,6 +15,7 @@ public class StellarBody extends Object{
     public boolean TRACKVEL;
     public StellarBody orbitingPoint = null;
     public ArrayList<StellarBody> MOONS = new ArrayList<>();
+    public MyShape myShape = null;
 
 
 
@@ -58,14 +58,18 @@ public class StellarBody extends Object{
     @Override
     public StellarBody clone() {
         if (!ORBITER) {
-            return new StellarBody(getInitialPosition()[0], getInitialPosition()[1], Title,
+             StellarBody rB = new StellarBody(getInitialPosition()[0], getInitialPosition()[1], Title,
                     Classification, getInitialMass(), Radius, getInitialMovement().getAngle(), getInitialMovement().getMagnitude(),
                     COLOR, STATIC, TRACKVEL);
+             rB.myShape = myShape;
+            return rB;
         }
         else {
-            return new StellarBody(getInitialPosition()[0], getInitialPosition()[1], Title,
+            StellarBody rB = new StellarBody(getInitialPosition()[0], getInitialPosition()[1], Title,
                     Classification, getInitialMass(), Radius, getInitialMovement().getAngle(), getInitialMovement().getMagnitude(),
                     COLOR, STATIC, TRACKVEL, orbitingPoint);
+            rB.myShape = myShape;
+            return rB;
         }
     }
 

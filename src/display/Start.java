@@ -9,6 +9,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.geom.Ellipse2D;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -158,8 +160,9 @@ public class Start extends JFrame {
         JButton rtn = new JButton("Return to Menu");
         JTextField angle = new JTextField(6);
         JTextField magnitude = new JTextField(6);
-        JTextField posx = new JTextField("X POS", 5);
-        JTextField posy = new JTextField("Y POS",5);
+        JTextField posx = new JTextField("0", 5);
+        JTextField posy = new JTextField("0",5);
+        JButton position = new JButton("Set Position");
         JTextField title = new JTextField(20);
         JTextField classif = new JTextField(20);
         JTextField mass = new JTextField(8);
@@ -170,13 +173,15 @@ public class Start extends JFrame {
         JButton preview = new JButton("Preview Movement");
         JButton finalize = new JButton("Finalize");
         JCheckBox track = new JCheckBox("False");
+        JTextField orbitDist = new JTextField(6);
 
 
-        public AddBody(StellarBody oldBody) {
+        public AddBody(StellarBody oldBody) { // edit body
             layout = new GroupLayout(getContentPane());
             getContentPane().setLayout(layout);
             layout.setAutoCreateGaps(true);
             layout.setAutoCreateContainerGaps(true);
+            this.setResizable(false);
             setTitle("Planet Action Menu");
 
             // determine labels
@@ -194,29 +199,26 @@ public class Start extends JFrame {
             JLabel errorText = new JLabel("");
             JLabel comboText = new JLabel("Parent Body: ");
             JLabel trackText = new JLabel("Display Velocity During Simulation: ");
+            JLabel orbitDistText = new JLabel("Perihelion (.5e6km): ");
+            orbitDistText.setVisible(false);
+            orbitDist.setVisible(false);
 
-            String[] Choices = new String[Start.this.Bodies.size()+1];
-            Choices[0] = "None";
-            for (int i=0;i < Start.this.Bodies.size(); i++) {
-                Choices[i+1] = Start.this.Bodies.get(i).Title;
-            }
-            orbiterChoices = new JComboBox<>(Choices);
+            angle.setMaximumSize(new Dimension(100,10));
+            magnitude.setMaximumSize(new Dimension(100,10));
+            posx.setMaximumSize(new Dimension(47,10));
+            posy.setMaximumSize(new Dimension(47,10));
+            title.setMaximumSize(new Dimension(100,10));
+            classif.setMaximumSize(new Dimension(100,10));
+            orbitDist.setMaximumSize(new Dimension(100,10));
+            position.setMinimumSize(new Dimension(100,10));
 
             angle.setText(String.valueOf(oldBody.Movement.coefficient()));
             magnitude.setText(String.format("%.2f", oldBody.Movement.getMagnitude()));
-            posx.setText(String.valueOf(oldBody.Position.get(0)));
-            posy.setText(String.valueOf(oldBody.Position.get(1)));
+            posx.setText(String.format("%.2f", oldBody.Position.get(0)));
+            posy.setText(String.format("%.2f", oldBody.Position.get(1)));
             mass.setText(String.valueOf(oldBody.Mass));
             radius.setText(String.valueOf(oldBody.Radius));
-            if (oldBody.ORBITER) {
-                int correctIndex = 0;
-                for (int i = 0; i < orbiterChoices.getItemCount(); i++) {
-                    if (orbiterChoices.getItemAt(i).equals(oldBody.orbitingPoint.Title)) {
-                        correctIndex = i;
-                    }
-                }
-                orbiterChoices.setSelectedIndex(correctIndex);
-            }
+
             title.setText(oldBody.Title);
             color.setText(String.format("%d,%d,%d",
                     oldBody.COLOR.getRed(),
@@ -227,54 +229,102 @@ public class Start extends JFrame {
             anchor.setSelected(oldBody.STATIC);
             track.setSelected(oldBody.TRACKVEL);
 
+            String[] Choices = new String[Start.this.Bodies.size()];
+            Choices[0] = "None";
+            System.out.println(Start.this.Bodies.size());
+            int missed = 0;
+            for (int i=0;i < Start.this.Bodies.size(); i++) {
+                System.out.printf(":%s%n",AddBody.this.title.getText());
+                if (!Start.this.Bodies.get(i).Title.equals(AddBody.this.title.getText())) Choices[i+1-missed] = Start.this.Bodies.get(i).Title;
+                else missed++;
+            }
+            orbiterChoices = new JComboBox<>(Choices);
+
+            this.orbiterChoices.addActionListener(e -> {
+                if (!String.valueOf(AddBody.this.orbiterChoices.getSelectedItem()).equals("None")) {
+                    AddBody.this.orbitDist.setVisible(true);
+                    orbitDistText.setVisible(true);
+                }
+                else {
+                    AddBody.this.orbitDist.setVisible(false);
+                    orbitDistText.setVisible(false);
+                }
+            });
+
+            if (oldBody.ORBITER) {
+                int correctIndex = 0;
+                for (int i = 0; i < orbiterChoices.getItemCount(); i++) {
+                    if (orbiterChoices.getItemAt(i).equals(oldBody.orbitingPoint.Title)) {
+                        correctIndex = i;
+                    }
+                }
+                orbiterChoices.setSelectedIndex(correctIndex);
+            }
+
             finalize.addActionListener(e -> {
                 try {
                     StellarBody nB = AddBody.this.finalize_body(oldBody);
                     Start.this.initialBodies.set(Start.this.Bodies.indexOf(oldBody), nB);
                     Start.this.Bodies.set(Start.this.Bodies.indexOf(oldBody), nB);
                     Start.this.refresh();
+                    Start.this.toFront();
+                    Start.this.requestFocus();
                     dispose();
                 }
                 catch (NumberFormatException exception) {
                     errorText.setText(String.format("Erorr: %s",exception.getMessage()));
                 }
             });
-            rtn.addActionListener(e -> dispose());
 
+            rtn.addActionListener(e -> {
+                Start.this.toFront();
+                Start.this.requestFocus();
+                dispose();
+            });
+
+            preview.setMinimumSize(new Dimension(150,30));
             preview.addActionListener(e -> {
                 try {
                     ArrayList<StellarBody> displayBodies = new ArrayList<>();
                     for (StellarBody b : Start.this.Bodies) {
                         if (b.Title.equals(oldBody.Title)) {
-                            displayBodies.add(AddBody.this.finalize_body(oldBody));
+                            displayBodies.add(finalize_body(oldBody));
                         }
                         else {
                             displayBodies.add(b.clone());
                         }
                     }
-                    Global GLOBAL = new Global(displayBodies);
+                    displayBodies.forEach(f -> System.out.println(f.Title));
+                    Global GLOBAL = new Global(displayBodies, this);
                     system.display(GLOBAL);
-                    GLOBAL.previewMovement(oldBody);
+                    GLOBAL.previewMovement(displayBodies);
                 } catch (NumberFormatException exception) {
                     errorText.setText(String.format("Erorr: %s",exception.getMessage()));
                 }
             });
-            posx.addFocusListener(new FocusAdapter() {
-                @Override
-                public void focusGained(FocusEvent e) {
-                    JTextField source = (JTextField)e.getComponent();
-                    source.setText("");
-                    source.removeFocusListener(this);
+            position.addActionListener(e -> {
+                try {
+                    ArrayList<StellarBody> displayBodies = new ArrayList<>();
+                    for (StellarBody b : Start.this.Bodies) {
+                        displayBodies.add(b.clone());
+                    }
+                    Global GLOBAL = new Global(displayBodies, this);
+                    system.display(GLOBAL);
+                    GLOBAL.addMouseListener(new MouseAdapter() {
+                        @Override
+                        public void mouseClicked(MouseEvent e) {
+                            System.out.println(e.getX()-GLOBAL.PREF_X/2);
+                            System.out.println(e.getY()-GLOBAL.PREF_Y/2);
+                            AddBody.this.posx.setText(String.valueOf(e.getX()-GLOBAL.PREF_X/2));
+                            AddBody.this.posy.setText(String.valueOf(e.getY()-GLOBAL.PREF_Y/2));
+                            GLOBAL.Frame.dispose();
+                        }
+                    });
+                } catch (NumberFormatException exception) {
+                    errorText.setText(String.format("Erorr: %s",exception.getMessage()));
                 }
             });
-            posy.addFocusListener(new FocusAdapter() {
-                @Override
-                public void focusGained(FocusEvent e) {
-                    JTextField source = (JTextField)e.getComponent();
-                    source.setText("");
-                    source.removeFocusListener(this);
-                }
-            });
+
             anchor.addActionListener(e -> {
                 JCheckBox source = AddBody.this.anchor;
                 if (source.isSelected()) {
@@ -308,103 +358,114 @@ public class Start extends JFrame {
                     }
                 }
                 Start.this.refresh();
+                Start.this.toFront();
+                Start.this.requestFocus();
                 this.dispose();
             });
 
-            layout.setHorizontalGroup(layout.createSequentialGroup() // HORIZONTAL
-                    .addGroup(layout.createParallelGroup(LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                    .addGroup(layout.createParallelGroup(LEADING)
-                                            .addComponent(rtn)
-                                            .addComponent(angleText)
-                                            .addComponent(magText)
-                                            .addComponent(posText)
-                                            .addComponent(titleText)
-                                            .addComponent(classText))
-                                    .addGap(7, 7, 7)
-                                    .addGroup(layout.createParallelGroup(LEADING)
-                                            .addComponent(angle)
-                                            .addComponent(magnitude)
-                                            .addGroup(layout.createSequentialGroup()
-                                                    .addComponent(posx)
-                                                    .addGap(5, 5, 5)
-                                                    .addComponent(posy))
-                                            .addComponent(title)
-                                            .addComponent(classif))
-                                    .addGap(3, 3, 3)
-                                    .addGroup(layout.createParallelGroup(LEADING)
-                                            .addComponent(physLabel)
-                                            .addComponent(cosLabel))
-                                    .addGroup(layout.createParallelGroup(LEADING)
-                                            .addComponent(massText)
-                                            .addComponent(radText)
-                                            .addComponent(comboText)
-                                            .addComponent(colText)
-                                            .addComponent(ancText))
-                                    .addGap(7, 7, 7)
-                                    .addGroup(layout.createParallelGroup(LEADING)
-                                            .addComponent(mass)
-                                            .addComponent(radius)
-                                            .addComponent(orbiterChoices)
-                                            .addComponent(color)
-                                            .addComponent(anchor)
-                                            .addComponent(remove))
-                                    .addGroup(layout.createParallelGroup(TRAILING)
-                                            .addComponent(preview)
-                                            .addComponent(finalize)))
-                            .addGroup(layout.createParallelGroup(LEADING)
-                                    .addComponent(errorText)
-                                    .addGroup(layout.createSequentialGroup()
-                                            .addComponent(trackText)
-                                            .addComponent(track))))
-            );
-            layout.setVerticalGroup(layout.createSequentialGroup() // VERTICAL
-                    .addGroup(layout.createParallelGroup(BASELINE)
-                            .addComponent(rtn)
-                            .addComponent(preview))
-                    .addGap(30,30,30)
-                    .addComponent(physLabel)
-                    .addGap(10,10,10)
-                    .addGroup(layout.createParallelGroup(BASELINE)
-                            .addComponent(angleText)
-                            .addComponent(angle)
-                            .addComponent(massText)
-                            .addComponent(mass))
-                    .addGap(10,10,10)
-                    .addGroup(layout.createParallelGroup(BASELINE)
-                            .addComponent(magText)
-                            .addComponent(magnitude)
-                            .addComponent(radText)
-                            .addComponent(radius))
-                    .addGap(10,10,10)
-                    .addGroup(layout.createParallelGroup(BASELINE)
-                            .addComponent(posText)
-                            .addComponent(posx)
-                            .addComponent(posy)
-                            .addComponent(comboText)
-                            .addComponent(orbiterChoices))
-                    .addGap(25,25,25)
-                    .addComponent(cosLabel)
-                    .addGap(10,10,10)
-                    .addGroup(layout.createParallelGroup(BASELINE)
-                            .addComponent(titleText)
-                            .addComponent(title)
-                            .addComponent(colText)
-                            .addComponent(color))
-                    .addGap(10,10,10)
-                    .addGroup(layout.createParallelGroup(BASELINE)
-                            .addComponent(classText)
-                            .addComponent(classif)
-                            .addComponent(ancText)
-                            .addGap(0,0,5)
-                            .addComponent(anchor))
-                    .addComponent(errorText)
-                    .addGroup(layout.createParallelGroup(TRAILING)
-                            .addComponent(trackText)
-                            .addComponent(track)
-                            .addComponent(remove)
-                            .addComponent(finalize))
-            );
+            {
+                layout.setHorizontalGroup(layout.createSequentialGroup() // HORIZONTAL
+                        .addGroup(layout.createParallelGroup(LEADING)
+                                .addGroup(layout.createSequentialGroup()
+                                        .addGroup(layout.createParallelGroup(LEADING)
+                                                .addComponent(rtn)
+                                                .addComponent(angleText)
+                                                .addComponent(magText)
+                                                .addComponent(posText)
+                                                .addComponent(titleText)
+                                                .addComponent(classText))
+                                        .addGap(7, 7, 7)
+                                        .addGroup(layout.createParallelGroup(LEADING)
+                                                .addComponent(angle)
+                                                .addComponent(magnitude)
+                                                .addComponent(position)
+                                                .addComponent(title)
+                                                .addComponent(classif))
+                                        .addGap(3, 3, 3)
+                                        .addGroup(layout.createParallelGroup(LEADING)
+                                                .addComponent(physLabel)
+                                                .addComponent(cosLabel))
+                                        .addGroup(layout.createParallelGroup(LEADING)
+                                                .addGroup(layout.createSequentialGroup()
+                                                        .addGroup(layout.createParallelGroup(LEADING)
+                                                                .addComponent(massText)
+                                                                .addComponent(radText)
+                                                                .addComponent(comboText)
+                                                                .addComponent(colText)
+                                                                .addComponent(ancText))
+                                                        .addGap(7, 7, 7)
+                                                        .addGroup(layout.createParallelGroup(LEADING)
+                                                                .addComponent(mass)
+                                                                .addComponent(radius)
+                                                                .addComponent(orbiterChoices)
+                                                                .addComponent(color)
+                                                                .addComponent(anchor)))
+
+                                                .addGroup(layout.createSequentialGroup()
+                                                        .addComponent(orbitDistText)
+                                                        .addComponent(orbitDist)))
+                                        .addGroup(layout.createParallelGroup(TRAILING)
+                                                .addComponent(preview)
+                                                .addComponent(finalize)))
+                                .addGroup(layout.createParallelGroup(LEADING)
+                                        .addComponent(errorText)
+                                        .addGroup(layout.createSequentialGroup()
+                                                .addComponent(trackText)
+                                                .addComponent(track)
+                                                .addGap(30,30,30)
+                                                .addComponent(remove))))
+                );
+                layout.setVerticalGroup(layout.createSequentialGroup() // VERTICAL
+                        .addGroup(layout.createParallelGroup(BASELINE)
+                                .addComponent(rtn)
+                                .addComponent(preview))
+                        .addGroup(layout.createParallelGroup(TRAILING)
+                                .addGap(30, 30, 30)
+                                .addComponent(physLabel))
+                        .addGap(10, 10, 10)
+                        .addGroup(layout.createParallelGroup(BASELINE)
+                                .addComponent(angleText)
+                                .addComponent(angle)
+                                .addComponent(massText)
+                                .addComponent(mass))
+                        .addGap(10, 10, 10)
+                        .addGroup(layout.createParallelGroup(BASELINE)
+                                .addComponent(magText)
+                                .addComponent(magnitude)
+                                .addComponent(radText)
+                                .addComponent(radius))
+                        .addGap(10, 10, 10)
+                        .addGroup(layout.createParallelGroup(BASELINE)
+                                .addComponent(posText)
+                                .addComponent(position)
+                                .addComponent(comboText)
+                                .addComponent(orbiterChoices))
+                        .addGroup(layout.createParallelGroup(CENTER)
+                                .addGap(15, 40, 40)
+                                .addComponent(orbitDistText)
+                                .addComponent(orbitDist))
+                        .addComponent(cosLabel)
+                        .addGap(10, 10, 10)
+                        .addGroup(layout.createParallelGroup(BASELINE)
+                                .addComponent(titleText)
+                                .addComponent(title)
+                                .addComponent(colText)
+                                .addComponent(color))
+                        .addGap(10, 10, 10)
+                        .addGroup(layout.createParallelGroup(BASELINE)
+                                .addComponent(classText)
+                                .addComponent(classif)
+                                .addComponent(ancText)
+                                .addGap(0, 0, 5)
+                                .addComponent(anchor))
+                        .addComponent(errorText)
+                        .addGroup(layout.createParallelGroup(TRAILING)
+                                .addComponent(trackText)
+                                .addComponent(track)
+                                .addComponent(remove)
+                                .addComponent(finalize))
+                );
+            }
 
             pack();
             setLocationRelativeTo(null);
@@ -415,8 +476,9 @@ public class Start extends JFrame {
             getContentPane().setLayout(layout);
             layout.setAutoCreateGaps(true);
             layout.setAutoCreateContainerGaps(true);
-            rtn.addActionListener(e -> AddBody.this.dispose());
+            this.setResizable(false);
             setTitle("Planet Action Menu");
+
             // determine labels
             JLabel angleText = new JLabel("Angle: ");
             JLabel magText = new JLabel("Magnitude: ");
@@ -427,11 +489,14 @@ public class Start extends JFrame {
             JLabel cosLabel = new JLabel("- COSMETIC - ");
             JLabel massText = new JLabel("Mass: ");
             JLabel radText = new JLabel("Radius: ");
-            JLabel colText = new JLabel("Icon Color: ");
+            JLabel colText = new JLabel("Color (R,G,B): ");
             JLabel ancText = new JLabel("Anchor: ");
             JLabel errorText = new JLabel("");
             JLabel comboText = new JLabel("Parent Body: ");
             JLabel trackText = new JLabel("Display Velocity During Simulation: ");
+            JLabel orbitDistText = new JLabel("Perihelion (.5e6km): ");
+            orbitDistText.setVisible(false);
+            orbitDist.setVisible(false);
 
             angle.setMaximumSize(new Dimension(100,10));
             magnitude.setMaximumSize(new Dimension(100,10));
@@ -439,6 +504,7 @@ public class Start extends JFrame {
             posy.setMaximumSize(new Dimension(47,10));
             title.setMaximumSize(new Dimension(100,10));
             classif.setMaximumSize(new Dimension(100,10));
+            orbitDist.setMaximumSize(new Dimension(100,10));
 
             finalize.addActionListener(e -> {
                 try {
@@ -446,59 +512,87 @@ public class Start extends JFrame {
                     Start.this.Bodies.add(nB);
                     Start.this.initialBodies.add(nB);
                     Start.this.refresh();
+                    Start.this.toFront();
+                    Start.this.requestFocus();
                     dispose();
                 }
                 catch (NumberFormatException exception) {
                     errorText.setText(String.format("Erorr: %s",exception.getMessage()));
                 }
             });
+
+            rtn.addActionListener(e -> {
+                Start.this.toFront();
+                Start.this.requestFocus();
+                dispose();
+            });
+
             String[] Choices = new String[Start.this.Bodies.size()+1];
             Choices[0] = "None";
             for (int i=0;i < Start.this.Bodies.size(); i++) {
-                Choices[i+1] = Start.this.Bodies.get(i).Title;
+                if (!Start.this.Bodies.get(i).Title.equals(AddBody.this.title.getText())) Choices[i+1] = Start.this.Bodies.get(i).Title;
             }
-            orbiterChoices = new JComboBox<>(Choices);
+            this.orbiterChoices = new JComboBox<>(Choices);
 
+            this.orbiterChoices.addActionListener(e -> {
+                if (!String.valueOf(AddBody.this.orbiterChoices.getSelectedItem()).equals("None")) {
+                    AddBody.this.orbitDist.setVisible(true);
+                    orbitDistText.setVisible(true);
+                }
+                else {
+                    AddBody.this.orbitDist.setVisible(false);
+                    orbitDistText.setVisible(false);
+                }
+            });
 
 
             String[] dfChoices = new String[system.DefaultBodies.size()+1];
-            dfChoices[0] = "None";
+            String defaultChoice = "Default Bodies";
+            dfChoices[0] = defaultChoice;
             for (int i=0;i<system.DefaultBodies.size();i++) dfChoices[i+1] = system.DefaultBodies.keySet().toArray(new String[0])[i];
-            JComboBox<String> defaultChoices = new JComboBox<>(dfChoices);
+            DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>(dfChoices);
+            JComboBox<String> defaultChoices = new JComboBox<>(model);
             AtomicReference<StellarBody> match = new AtomicReference<>();
             defaultChoices.addActionListener(e -> {
+                if (String.valueOf(model.getElementAt(0)).equals(defaultChoice)) {
+                    model.removeElementAt(0);
+                    model.insertElementAt("None", 0);
+                    dfChoices[0] = "None";
+                }
+                this.validate();
                 for (StellarBody body : system.DefaultBodies.values()) {
                     if (body.Title.equals(String.valueOf(defaultChoices.getSelectedItem()))) {
                         match.set(body.clone());
                     }
                 }
-
-                if (!match.equals(new AtomicReference<>()) && !String.valueOf(defaultChoices.getSelectedItem()).equals("None")) {
-                    angle.setText(String.valueOf(match.get().Movement.coefficient()));
-                    magnitude.setText(String.format("%.2f", match.get().Movement.getMagnitude()));
-                    posx.setText(String.valueOf(match.get().Position.get(0)));
-                    posy.setText(String.valueOf(match.get().Position.get(1)));
-                    mass.setText(String.valueOf(match.get().Mass));
-                    radius.setText(String.valueOf(match.get().Radius));
-                    if (match.get().ORBITER) {
+//                System.out.println()
+                if (!match.equals(new AtomicReference<>()) && !String.valueOf(defaultChoices.getSelectedItem()).equals("None") && !String.valueOf(defaultChoices.getSelectedItem()).equals(defaultChoice)) {
+                    StellarBody nB = match.get().clone();
+                    angle.setText(String.valueOf(nB.Movement.coefficient()));
+                    magnitude.setText(String.format("%.2f", nB.Movement.getMagnitude()));
+                    posx.setText(String.format("%.2f", nB.Position.get(0)));
+                    posy.setText(String.format("%.2f", nB.Position.get(1)));
+                    mass.setText(String.valueOf(nB.Mass));
+                    radius.setText(String.valueOf(nB.Radius));
+                    if (nB.ORBITER) {
                         int correctIndex = 0;
                         for (int i = 0; i < orbiterChoices.getItemCount(); i++) {
-                            if (orbiterChoices.getItemAt(i).equals(match.get().orbitingPoint.Title)) {
+                            if (orbiterChoices.getItemAt(i).equals(nB.orbitingPoint.Title)) {
                                 correctIndex = i;
                             }
                         }
                         orbiterChoices.setSelectedIndex(correctIndex);
                     }
-                    title.setText(match.get().Title);
+                    title.setText(nB.Title);
                     color.setText(
                             String.format("%d,%d,%d",
-                                    match.get().COLOR.getRed(),
-                                    match.get().COLOR.getGreen(),
-                                    match.get().COLOR.getBlue())
+                                    nB.COLOR.getRed(),
+                                    nB.COLOR.getGreen(),
+                                    nB.COLOR.getBlue())
                     );
-                    classif.setText(match.get().Classification);
-                    anchor.setSelected(match.get().STATIC);
-                    track.setSelected(match.get().TRACKVEL);
+                    classif.setText(nB.Classification);
+                    anchor.setSelected(nB.STATIC);
+                    track.setSelected(nB.TRACKVEL);
 
                     if(anchor.isSelected()) anchor.setText("True ");
                     else anchor.setText("False");
@@ -523,6 +617,9 @@ public class Start extends JFrame {
                 }
             });
 
+            preview.setMinimumSize(new Dimension(150,30));
+            defaultChoices.setMaximumSize(new Dimension(150,30));
+
 
             preview.addActionListener(e -> {
                 try {
@@ -532,31 +629,37 @@ public class Start extends JFrame {
                     }
                     StellarBody nB = AddBody.this.finalize_body();
                     displayBodies.add(nB);
-                    Global GLOBAL = new Global(displayBodies);
+                    Global GLOBAL = new Global(displayBodies, this);
                     system.display(GLOBAL);
-                    GLOBAL.previewMovement(nB);
+                    GLOBAL.previewMovement(displayBodies);
                 } catch (NumberFormatException exception) {
                     errorText.setText(String.format("Erorr: %s",exception.getMessage()));
                 }
             });
-            posx.addFocusListener(new FocusAdapter() {
-                @Override
-                public void focusGained(FocusEvent e) {
-                    JTextField source = (JTextField)e.getComponent();
-                    source.setText("");
-                    source.removeFocusListener(this);
-                }
-            });
-            posy.addFocusListener(new FocusAdapter() {
-                @Override
-                public void focusGained(FocusEvent e) {
-                    JTextField source = (JTextField)e.getComponent();
-                    source.setText("");
-                    source.removeFocusListener(this);
+            position.addActionListener(e -> {
+                try {
+                    ArrayList<StellarBody> displayBodies = new ArrayList<>();
+                    for (StellarBody b : Start.this.Bodies) {
+                        displayBodies.add(b.clone());
+                    }
+                    Global GLOBAL = new Global(displayBodies, this);
+                    system.display(GLOBAL);
+                    GLOBAL.addMouseListener(new MouseAdapter() {
+                        @Override
+                        public void mouseClicked(MouseEvent e) {
+                            System.out.println(e.getX()-GLOBAL.PREF_X/2);
+                            System.out.println(e.getY()-GLOBAL.PREF_Y/2);
+                            AddBody.this.posx.setText(String.valueOf(e.getX()-GLOBAL.PREF_X/2));
+                            AddBody.this.posy.setText(String.valueOf(e.getY()-GLOBAL.PREF_Y/2));
+                            GLOBAL.Frame.dispose();
+                        }
+                    });
+                } catch (NumberFormatException exception) {
+                    errorText.setText(String.format("Erorr: %s",exception.getMessage()));
                 }
             });
             anchor.addActionListener(e -> {
-                JCheckBox source = (JCheckBox) e.getSource();
+                JCheckBox source = AddBody.this.anchor;
                 if (source.isSelected()) {
                     source.setText("True ");
                 }
@@ -565,7 +668,7 @@ public class Start extends JFrame {
                 }
             });
             track.addActionListener(e -> {
-                JCheckBox source = (JCheckBox) e.getSource();
+                JCheckBox source = AddBody.this.track;
                 if (source.isSelected()) {
                     source.setText("True ");
                 }
@@ -573,103 +676,113 @@ public class Start extends JFrame {
                     source.setText("False");
                 }
             });
+            if(anchor.isSelected()) anchor.setText("True ");
+            else anchor.setText("False");
+            if(track.isSelected()) track.setText("True ");
+            else track.setText("False");
 
+            {
+                layout.setHorizontalGroup(layout.createSequentialGroup() // HORIZONTAL
+                        .addGroup(layout.createParallelGroup(LEADING)
+                                .addGroup(layout.createSequentialGroup()
+                                        .addGroup(layout.createParallelGroup(LEADING)
+                                                .addComponent(rtn)
+                                                .addComponent(angleText)
+                                                .addComponent(magText)
+                                                .addComponent(posText)
+                                                .addComponent(titleText)
+                                                .addComponent(classText))
+                                        .addGap(7, 7, 7)
+                                        .addGroup(layout.createParallelGroup(LEADING)
+                                                .addComponent(angle)
+                                                .addComponent(magnitude)
+                                                .addComponent(position)
+                                                .addComponent(title)
+                                                .addComponent(classif))
+                                        .addGap(3, 3, 3)
+                                        .addGroup(layout.createParallelGroup(LEADING)
+                                                .addComponent(physLabel)
+                                                .addComponent(cosLabel))
+                                        .addGroup(layout.createParallelGroup(LEADING)
+                                                .addGroup(layout.createSequentialGroup()
+                                                        .addGroup(layout.createParallelGroup(LEADING)
+                                                                .addComponent(massText)
+                                                                .addComponent(radText)
+                                                                .addComponent(comboText)
+                                                                .addComponent(colText)
+                                                                .addComponent(ancText))
+                                                        .addGap(7, 7, 7)
+                                                        .addGroup(layout.createParallelGroup(LEADING)
+                                                                .addComponent(mass)
+                                                                .addComponent(radius)
+                                                                .addComponent(orbiterChoices)
+                                                                .addComponent(color)
+                                                                .addComponent(anchor)))
 
-            layout.setHorizontalGroup(layout.createSequentialGroup() // HORIZONTAL
-                    .addGroup(layout.createParallelGroup(LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                    .addGroup(layout.createParallelGroup(LEADING)
-                                            .addComponent(rtn)
-                                            .addComponent(angleText)
-                                            .addComponent(magText)
-                                            .addComponent(posText)
-                                            .addComponent(titleText)
-                                            .addComponent(classText))
-                                    .addGap(7, 7, 7)
-                                    .addGroup(layout.createParallelGroup(LEADING)
-                                            .addComponent(angle)
-                                            .addComponent(magnitude)
-                                            .addGroup(layout.createSequentialGroup()
-                                                    .addComponent(posx)
-                                                    .addGap(5, 5, 5)
-                                                    .addComponent(posy))
-                                            .addComponent(title)
-                                            .addComponent(classif))
-                                    .addGap(3, 3, 3)
-                                    .addGroup(layout.createParallelGroup(LEADING)
-                                            .addComponent(physLabel)
-                                            .addComponent(cosLabel))
-                                    .addGroup(layout.createParallelGroup(LEADING)
-                                            .addComponent(massText)
-                                            .addComponent(radText)
-                                            .addComponent(comboText)
-                                            .addComponent(colText)
-                                            .addComponent(ancText))
-                                    .addGap(7, 7, 7)
-                                    .addGroup(layout.createParallelGroup(LEADING)
-                                            .addComponent(mass)
-                                            .addComponent(radius)
-                                            .addComponent(orbiterChoices)
-                                            .addComponent(color)
-                                            .addComponent(anchor))
-                                    .addGroup(layout.createParallelGroup(TRAILING)
-                                            .addComponent(defaultChoices)
-                                            .addComponent(preview)
-                                            .addComponent(finalize)))
-                    .addGroup(layout.createParallelGroup(LEADING)
-                            .addComponent(errorText)
-                            .addGroup(layout.createSequentialGroup()
-                                    .addComponent(trackText)
-                                    .addComponent(track))))
-            );
-            layout.setVerticalGroup(layout.createSequentialGroup() // VERTICAL
-                    .addGroup(layout.createParallelGroup(BASELINE)
-                            .addComponent(rtn)
-                            .addComponent(preview))
-                    .addGroup(layout.createParallelGroup(TRAILING)
-                            .addGap(30,30,30)
-                            .addComponent(defaultChoices))
-                    .addComponent(physLabel)
-                    .addGap(10,10,10)
-                    .addGroup(layout.createParallelGroup(BASELINE)
-                            .addComponent(angleText)
-                            .addComponent(angle)
-                            .addComponent(massText)
-                            .addComponent(mass))
-                    .addGap(10,10,10)
-                    .addGroup(layout.createParallelGroup(BASELINE)
-                            .addComponent(magText)
-                            .addComponent(magnitude)
-                            .addComponent(radText)
-                            .addComponent(radius))
-                    .addGap(10,10,10)
-                    .addGroup(layout.createParallelGroup(BASELINE)
-                            .addComponent(posText)
-                            .addComponent(posx)
-                            .addComponent(posy)
-                            .addComponent(comboText)
-                            .addComponent(orbiterChoices))
-                    .addGap(25,25,25)
-                    .addComponent(cosLabel)
-                    .addGap(10,10,10)
-                    .addGroup(layout.createParallelGroup(BASELINE)
-                            .addComponent(titleText)
-                            .addComponent(title)
-                            .addComponent(colText)
-                            .addComponent(color))
-                    .addGap(10,10,10)
-                    .addGroup(layout.createParallelGroup(BASELINE)
-                            .addComponent(classText)
-                            .addComponent(classif)
-                            .addComponent(ancText)
-                            .addGap(0,0,5)
-                            .addComponent(anchor))
-                    .addComponent(errorText)
-                    .addGroup(layout.createParallelGroup(TRAILING)
-                            .addComponent(trackText)
-                            .addComponent(track)
-                            .addComponent(finalize))
-            );
+                                                .addGroup(layout.createSequentialGroup()
+                                                        .addComponent(orbitDistText)
+                                                        .addComponent(orbitDist)))
+                                        .addGroup(layout.createParallelGroup(TRAILING)
+                                                .addComponent(defaultChoices)
+                                                .addComponent(preview)
+                                                .addComponent(finalize)))
+                                .addGroup(layout.createParallelGroup(LEADING)
+                                        .addComponent(errorText)
+                                        .addGroup(layout.createSequentialGroup()
+                                                .addComponent(trackText)
+                                                .addComponent(track))))
+                );
+                layout.setVerticalGroup(layout.createSequentialGroup() // VERTICAL
+                        .addGroup(layout.createParallelGroup(BASELINE)
+                                .addComponent(rtn)
+                                .addComponent(preview))
+                        .addGroup(layout.createParallelGroup(TRAILING)
+                                .addGap(30, 30, 30)
+                                .addComponent(defaultChoices)
+                                .addComponent(physLabel))
+                        .addGap(10, 10, 10)
+                        .addGroup(layout.createParallelGroup(BASELINE)
+                                .addComponent(angleText)
+                                .addComponent(angle)
+                                .addComponent(massText)
+                                .addComponent(mass))
+                        .addGap(10, 10, 10)
+                        .addGroup(layout.createParallelGroup(BASELINE)
+                                .addComponent(magText)
+                                .addComponent(magnitude)
+                                .addComponent(radText)
+                                .addComponent(radius))
+                        .addGap(10, 10, 10)
+                        .addGroup(layout.createParallelGroup(BASELINE)
+                                .addComponent(posText)
+                                .addComponent(position)
+                                .addComponent(comboText)
+                                .addComponent(orbiterChoices))
+                        .addGroup(layout.createParallelGroup(CENTER)
+                                .addGap(15, 40, 40)
+                                .addComponent(orbitDistText)
+                                .addComponent(orbitDist))
+                        .addComponent(cosLabel)
+                        .addGap(10, 10, 10)
+                        .addGroup(layout.createParallelGroup(BASELINE)
+                                .addComponent(titleText)
+                                .addComponent(title)
+                                .addComponent(colText)
+                                .addComponent(color))
+                        .addGap(10, 10, 10)
+                        .addGroup(layout.createParallelGroup(BASELINE)
+                                .addComponent(classText)
+                                .addComponent(classif)
+                                .addComponent(ancText)
+                                .addGap(0, 0, 5)
+                                .addComponent(anchor))
+                        .addComponent(errorText)
+                        .addGroup(layout.createParallelGroup(TRAILING)
+                                .addComponent(trackText)
+                                .addComponent(track)
+                                .addComponent(finalize))
+                );
+            }
 
             pack();
             setLocationRelativeTo(null);
@@ -695,6 +808,14 @@ public class Start extends JFrame {
 
                 Line Tether = new Line(nB, orbitingBody);
                 double angle = Tether.Movement.coefficient()+90;
+
+                if (!String.valueOf(orbitDist.getText()).isBlank()) {
+                    float Y = Float.parseFloat(orbitDist.getText()) * (float) Math.sin(Math.toRadians(Tether.Movement.coefficient()));
+                    float X = Float.parseFloat(orbitDist.getText()) * (float) Math.cos(Math.toRadians(Tether.Movement.coefficient()));
+                    nB.Position = new ArrayList<>(Arrays.asList(X, Y));
+                    nB.overrideInitialPosition(nB.Position);
+                }
+
                 nB.Movement = new Movement(String.format("%.2fd",angle),nB.Movement.getMagnitude());
                 orbitingBody.find_orbit(nB,system.DistScale);
                 nB.overrideInitialMovement(nB.Movement);
@@ -713,6 +834,7 @@ public class Start extends JFrame {
             nB.Title = title.getText();
             nB.Classification = classif.getText();
             nB.Mass = Double.parseDouble(mass.getText());
+            nB.overrideInitialMass(nB.Mass);
             nB.Radius = Integer.parseInt(radius.getText());
 
             nB.Movement = new Movement(String.format("%sd",angle.getText()), Double.parseDouble(magnitude.getText()));
@@ -729,6 +851,26 @@ public class Start extends JFrame {
                     }
                 }
                 nB.orbitingPoint = orbiting;
+            }
+            else {
+                nB.orbitingPoint = null;
+                nB.ORBITER = false;
+            }
+
+            if (Objects.nonNull(nB.orbitingPoint)) {
+                Line Tether = new Line(nB, nB.orbitingPoint);
+                double angle = Tether.Movement.coefficient() + 90;
+
+                if (!String.valueOf(orbitDist.getText()).isBlank()) {
+                    float Y = Float.parseFloat(orbitDist.getText()) * (float) Math.sin(Math.toRadians(Tether.Movement.coefficient()));
+                    float X = Float.parseFloat(orbitDist.getText()) * (float) Math.cos(Math.toRadians(Tether.Movement.coefficient()));
+                    nB.Position = new ArrayList<>(Arrays.asList(X, Y));
+                    nB.overrideInitialPosition(nB.Position);
+                }
+
+                nB.Movement = new Movement(String.format("%.2fd", angle), nB.Movement.getMagnitude());
+                nB.orbitingPoint.find_orbit(nB, system.DistScale);
+                nB.overrideInitialMovement(nB.Movement);
             }
 
             return nB.clone();
@@ -757,7 +899,11 @@ public class Start extends JFrame {
             layout.setAutoCreateGaps(true);
             layout.setAutoCreateContainerGaps(true);
             rtn.addActionListener(e -> Settings.this.closeSettings());
-            cncl.addActionListener(e -> Settings.this.dispose());
+            cncl.addActionListener(e -> {
+                        Start.this.toFront();
+                        Start.this.requestFocus();
+                        dispose();
+            });
             setSize(PREF_X,PREF_Y);
             setLocationRelativeTo(null);
 
@@ -767,7 +913,7 @@ public class Start extends JFrame {
             JLabel dilationNote = new JLabel("NOTE: between .01 and 2 is the");
             JLabel dilationNote2 = new JLabel("recommended range for Time Dilation.");
 
-            timeField.setText(String.valueOf(system.CYCLES*system.CycleDelay/100.));
+            timeField.setText(String.valueOf(system.CYCLES*system.CycleDelay/1000.));
             delayField.setText(String.valueOf(system.CycleDelay));
             dilationField.setText(String.valueOf(system.TimeScale));
 
@@ -828,11 +974,13 @@ public class Start extends JFrame {
             }
 
             delayMs = Math.max(1, delayMs);
-            int numFrames = (int)(Math.round(timeSeconds*1000)/delayMs + 1)/2;
+            int numFrames = (int)(timeSeconds*1000./delayMs);
 
             system.CycleDelay = delayMs;
             system.CYCLES = numFrames;
             system.TimeScale = dilationMult;
+            Start.this.toFront();
+            Start.this.requestFocus();
             Settings.this.dispose();
         }
 

@@ -25,7 +25,7 @@ public class system {
         StellarBody Earth = new StellarBody(304.2f,0.0f,"Earth","Planet",5.96e24, 10, "120.00d", 10.0, Color.GREEN.darker(), false, true, Sun);
         StellarBody Venus = new StellarBody(214.8f,0.0f,"Venus","Planet",4.86e24,10,"90.00d",10.0,Color.BLUE,false, false, Sun);
         StellarBody Mercury = new StellarBody(115.8f, 0.0f, "Mercury", "Planet", 0.33e24,5,"90.00d",10.0,Color.GRAY,false, false, Sun);
-        StellarBody Mars = new StellarBody(-498.4f,0.0f,"Mars","Planet",0.6417e24,15,"90.00d",10.0,Color.RED,false, false, Sun);
+        StellarBody Mars = new StellarBody(498.4f,0.0f,"Mars","Planet",0.6417e24,15,"90.00d",10.0,Color.RED,false, false, Sun);
         Sun.find_orbit(Mercury, DistScale);
         Sun.find_orbit(Venus,DistScale);
         Sun.find_orbit(Earth,DistScale);
@@ -98,8 +98,8 @@ public class system {
             });
             if (!body.STATIC) {
                 global.move(body, TimeScale);
-                global.displayBody(body);
             }
+            global.displayBody(body);
         }
 
         global.removeAll();
