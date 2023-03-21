@@ -26,6 +26,9 @@ public class Object {
         InitialPosition.add(pos.get(0));
         InitialPosition.add(pos.get(1));
     }
+    public void overrideInitialMass(Double mass) {
+        InitialMass = mass;
+    }
     public void reset() throws ExecutionControl.NotImplementedException {
         this.Position = InitialPosition;
         this.Movement = InitialMovement;

@@ -2,14 +2,15 @@ package display;
 
 import physics.Line;
 import physics.StellarBody;
+import physics.system;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 import java.awt.geom.*;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.Objects;
+import java.util.*;
 
 class GlobalFrame extends JFrame {
     int PREF_X = 1440;
@@ -26,9 +27,10 @@ class GlobalFrame extends JFrame {
 public class Global extends JPanel {
     protected int PREF_X = 1440;
     protected int PREF_Y = 1080;
-    public ArrayList<MyShape> Shapes = new ArrayList<>();
+//    public ArrayList<MyShape> Shapes = new ArrayList<>();
     public final JFrame Frame;
     public boolean SimComplete = false;
+    public boolean Preview;
     private final ArrayList<StellarBody> Bodies;
     private ArrayList<StellarBody> CollidedBodies = new ArrayList<>();
     protected Graphics2D g2;
@@ -36,9 +38,9 @@ public class Global extends JPanel {
     public ArrayList<JLabel> velocityLabels = new ArrayList<>();
     private final JButton returnToMainMenu = new JButton("Exit To Menu");
     public void reset(Start start) {
-        Shapes.clear();
         Bodies.clear();
         for (StellarBody b : start.initialBodies) {
+            b.myShape = null;
             this.Bodies.add(b.clone());
         }
 
@@ -75,7 +77,7 @@ public class Global extends JPanel {
         Frame.setResizable(false);
 
     }
-    public Global(ArrayList<StellarBody> bodies) { // meant for previewMovement only
+    public Global(ArrayList<StellarBody> bodies, Start.AddBody prevMenu) { // meant for previewMovement only
         Frame = new GlobalFrame();
         Frame.getContentPane().add(this);
         this.Bodies = bodies;
@@ -92,12 +94,23 @@ public class Global extends JPanel {
         setPreferredSize(new Dimension(PREF_X, PREF_Y));
         returnToMainMenu.setText("Close Preview");
         returnToMainMenu.setFont(new Font("Times New Roman",Font.BOLD,16));
-        returnToMainMenu.addActionListener(e -> this.Frame.dispose());
+        returnToMainMenu.addActionListener(e -> {
+            prevMenu.toFront();
+            prevMenu.requestFocus();
+            this.Frame.dispose();
+        });
         returnToMainMenu.setBounds(PREF_X/2-40,10,80,20);
         this.add(returnToMainMenu);
         Frame.setTitle("Preview Movement");
         Frame.pack();
         Frame.setResizable(false);
+
+        this.Frame.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                Global.this.Preview = false;
+            }
+        });
     }
     @Override
     public Dimension getPreferredSize() {
@@ -105,16 +118,29 @@ public class Global extends JPanel {
         return new Dimension(PREF_X, PREF_Y);
     }
 
-    public void previewMovement(StellarBody obj) {
-        StellarBody tempObj = obj.clone();
-        tempObj.move(10.0);
-        this.g2 = (Graphics2D) Frame.getGraphics();
-        assert this.g2 != null;
+    public void previewMovement(ArrayList<StellarBody> origBodies) {
+        Preview = true;
+        ArrayList<StellarBody> bodies = new ArrayList<>();
+        origBodies.forEach(e -> bodies.add(e.clone()));
 
-        float[] CENTER = new float[2];
-        CENTER[0] = PREF_X/2f;
-        CENTER[1] = PREF_Y/2f;
-        Lines.add(new Line((ArrayList<Float>) obj.Position.clone(), (ArrayList<Float>) tempObj.Position.clone(), CENTER, obj.Radius));
+        this.g2 = (Graphics2D) Frame.getGraphics();
+        for (int cycle = 0; cycle<100; cycle++) {
+            this.collision(bodies);
+            for (StellarBody obj : bodies) {
+                if (!obj.myShape.isCollided) {
+                    bodies.forEach(e -> {if (!e.Title.equals(obj.Title)) e.effect_movement(obj, 0.2, system.DistScale);});
+                    this.move(obj, 0.2);
+
+//                float[] CENTER = new float[2];
+//                CENTER[0] = PREF_X / 2f;
+//                CENTER[1] = PREF_Y / 2f;
+//                Lines.add(new Line((ArrayList<Float>) obj.Position.clone(), (ArrayList<Float>) obj.Position.clone(), CENTER, obj.Radius));
+                }
+            }
+        }
+        for (StellarBody body : bodies) {
+            this.drawHistory(g2, body);
+        }
     }
 
 
@@ -125,21 +151,13 @@ public class Global extends JPanel {
                 PREF_X / 2f + obj.Position.get(0) - obj.Radius.floatValue(),
                 PREF_Y / 2f + obj.Position.get(1) - obj.Radius.floatValue(),
                 obj.Radius.floatValue() * 2, obj.Radius.floatValue() * 2), obj.COLOR);
-        if (Shapes.isEmpty()) {Shapes.add(newShape);} // Most likely this will be the sun
-        boolean Found = false;
-        ArrayList<MyShape> tmpShapes = (ArrayList<MyShape>) Shapes.clone(); // Duplicated Shapes so that we can iterate + edit
-        for (MyShape shp : tmpShapes) {
-            if (shp.Title.equals(newShape.Title)) { // Find matching shape, copy history
-                Found = true;
-                newShape.PositionHistory = shp.PositionHistory;
-                if (!shp.isCollided) { // If it isn't collided, copy it. If it is, do nothing with it
-                    Shapes.remove(shp);
-                    Shapes.add(newShape);
-                }
-            }
+
+        if (Objects.nonNull(obj.myShape)) {
+            newShape.PositionHistory = obj.myShape.PositionHistory;
+            obj.myShape = newShape;
         }
-        if (!Found) {
-            Shapes.add(newShape);
+        else {
+            obj.myShape = newShape;
         }
 
         JLabel velocity = new JLabel(String.format("%.2fkm/s",obj.Movement.getMagnitude()));
@@ -148,77 +166,68 @@ public class Global extends JPanel {
         velocityLabels.add(velocity);
     }
     public void move(StellarBody obj, Double TimeScale) {
-            for (MyShape shape : Shapes) {
-                if (shape.Title.equals(obj.Title) && !shape.isCollided) {
-                    obj.move(TimeScale);
-                    Double[] mv = obj.Movement.evaluate(TimeScale);
-                    shape.translate(mv[0], mv[1]);
-                }
-            }
+        obj.move(TimeScale);
+        Double[] mv = obj.Movement.evaluate(TimeScale);
+        obj.myShape.translate(mv[0], mv[1]);
     }
     public void collision(ArrayList<StellarBody> bodies) { // Goes through `bodies` and checks each for a collision
+        ArrayList<StellarBody> toRemove = new ArrayList<>();
         ArrayList<String> Check = new ArrayList<>();
-        for (MyShape obj : Shapes) {
-            for (MyShape shape : Shapes) {
-                if (!Objects.equals(shape.Title, obj.Title) &&
-                        !(Check.contains(String.format("%s->%s", shape.Title, obj.Title)) ||
-                        Check.contains(String.format("%s->%s", obj.Title, shape.Title))) &&
-                        (!shape.isCollided && !obj.isCollided)) {
-                    AffineTransform at = new AffineTransform();
+        for (StellarBody prim : Bodies) {
+            for (StellarBody sec : Bodies) {
+                if (!prim.Title.equals(sec.Title) &&
+                        !(Check.contains(String.format("%s->%s", prim.Title, sec.Title)) || Check.contains(String.format("%s->%s", sec.Title, prim.Title))) &&
+                        (!prim.myShape.isCollided && !sec.myShape.isCollided)) {
 
+                    AffineTransform at = new AffineTransform();
                     GeneralPath pathObj = new GeneralPath();
-                    pathObj.append(obj.Shape.getPathIterator(at), false);
-                    double x = (obj.PosX - pathObj.getBounds().getMinX());
-                    double y = (obj.PosY - pathObj.getBounds().getMinY());
+                    pathObj.append(prim.myShape.Shape.getPathIterator(at), false);
+                    double x = (prim.myShape.PosX - pathObj.getBounds().getMinX());
+                    double y = (prim.myShape.PosY - pathObj.getBounds().getMinY());
                     at.translate(x, y);
                     pathObj.reset();
-                    pathObj.append(obj.Shape.getPathIterator(at), false);
+                    pathObj.append(prim.myShape.Shape.getPathIterator(at), false);
 
                     at = new AffineTransform();
                     GeneralPath pathShape = new GeneralPath();
-                    pathShape.append(shape.Shape.getPathIterator(at), false);
-                    x = pathShape.getBounds().getMinX()!=0.0?(shape.PosX - pathShape.getBounds().getMinX()):0.00;
-                    y = pathShape.getBounds().getMinY()!=0.0?(shape.PosY - pathShape.getBounds().getMinY()):0.00;
+                    pathShape.append(sec.myShape.Shape.getPathIterator(at), false);
+                    x = pathShape.getBounds().getMinX()!=0.0?(sec.myShape.PosX - pathShape.getBounds().getMinX()):0.00;
+                    y = pathShape.getBounds().getMinY()!=0.0?(sec.myShape.PosY - pathShape.getBounds().getMinY()):0.00;
                     at.translate(x,y);
                     pathShape.reset();
-                    pathShape.append(shape.Shape.getPathIterator(at), false);
+                    pathShape.append(sec.myShape.Shape.getPathIterator(at), false);
 
                     Area a1 = new Area(pathObj);
                     Area a2 = new Area(pathShape);
                     a2.intersect(a1);
 
                     if (!a2.isEmpty()) {
-                        StellarBody mainBody = null;
-                        StellarBody secondaryBody = null;
-                        for (StellarBody body : bodies) {
-                            if (body.Title.equals(obj.Title)) {mainBody = body;}
-                            if (body.Title.equals(shape.Title)) {secondaryBody = body;}
-                        }
-                        if (Objects.requireNonNull(mainBody).Mass > Objects.requireNonNull(secondaryBody).Mass) {
-                            shape.isCollided = true;
-                            mainBody.Mass += secondaryBody.Mass;
-                            secondaryBody.Movement.setMagnitude(0.0);
-                            obj.PositionHistory.add(new Double[] {
-                                    obj.PosX+obj.Shape.getBounds().width/2.0, obj.PosY+obj.Shape.getBounds().width/2.0, 1.0
+                        if (Objects.requireNonNull(prim).Mass > Objects.requireNonNull(sec).Mass) {
+                            sec.myShape.isCollided = true;
+                            prim.Mass += sec.Mass;
+                            sec.Movement.setMagnitude(0.0);
+                            prim.myShape.PositionHistory.add(new Double[] {
+                                    prim.myShape.PosX+prim.myShape.Shape.getBounds().width/2.0, prim.myShape.PosY+prim.myShape.Shape.getBounds().width/2.0, 1.0
                             });
-                            CollidedBodies.add(secondaryBody);
-                            bodies.remove(secondaryBody);
+                            CollidedBodies.add(sec);
+                            toRemove.add(sec);
                         }
-                        else if (mainBody.Mass < secondaryBody.Mass) {
-                            obj.isCollided = true;
-                            secondaryBody.Mass += mainBody.Mass;
-                            mainBody.Movement.setMagnitude(0.0);
-                            shape.PositionHistory.add(new Double[] {
-                                    shape.PosX+shape.Shape.getBounds().width/2.0, shape.PosY+shape.Shape.getBounds().width/2.0, 1.0
+                        else if (prim.Mass < sec.Mass) {
+                            prim.myShape.isCollided = true;
+                            sec.Mass += prim.Mass;
+                            prim.Movement.setMagnitude(0.0);
+                            sec.myShape.PositionHistory.add(new Double[] {
+                                    sec.myShape.PosX+sec.myShape.Shape.getBounds().width/2.0, sec.myShape.PosY+sec.myShape.Shape.getBounds().width/2.0, 1.0
                             });
-                            CollidedBodies.add(mainBody);
-                            bodies.remove(mainBody);
+                            CollidedBodies.add(prim);
+                            toRemove.add(prim);
                         }
                     }
-                    Check.add(String.format("%s->%s", obj.Title, shape.Title));
+                    Check.add(String.format("%s->%s", prim.Title, sec.Title));
                 }
             }
         }
+        toRemove.forEach(Bodies::remove);
     }
     @Override
     public void paintComponent(Graphics g) {
@@ -234,10 +243,10 @@ public class Global extends JPanel {
                 g2.setStroke(new BasicStroke(1));
             }
         }
-        for (MyShape shape : Shapes) {
-            shape.draw(g2, false);
+        for (StellarBody body : Bodies) {
+            body.myShape.draw(g2, false);
         }
-        if (SimComplete) {
+        if (SimComplete || Preview) {
             for (StellarBody body : Bodies) {
                 drawHistory(g2, body);
             }
@@ -252,114 +261,49 @@ public class Global extends JPanel {
         revalidate();
     }
     public void drawHistory(Graphics2D g2, StellarBody obj) {
-        for (MyShape shape : Shapes) {
-//            if (!obj.Title.equals("Sun") && !shape.Title.equals("Sun")) {
-                if (shape.Title.equals(obj.Title)) {
-                    Iterator<Double[]> it = shape.PositionHistory.iterator();
-                    Double[] prevPosition = {0.0, 0.0, 0.0};
-                    Double[] curPosition;
-                    if (it.hasNext()) {
-                        prevPosition = it.next();
-                    }
-                    int i = 0;
-                    while (it.hasNext()) {
-                        curPosition = it.next();
-
-                        g2.setColor(obj.COLOR);
-                        this.line(prevPosition, curPosition);
-                        if (i%10 == 0) { // Only draws an arrow every 10 steps
-                            Line change = new Line(curPosition, prevPosition); // Create direction arrows for history path
-                            double leftWingAngle = change.Movement.coefficient() + 30;
-                            double rightWingAngle = change.Movement.coefficient() - 30;
-                            double leftXLength = 10 * Math.cos(Math.toRadians(leftWingAngle));
-                            double leftYLength = 10 * Math.sin(Math.toRadians(leftWingAngle));
-                            double rightXLength = 10 * Math.cos(Math.toRadians(rightWingAngle));
-                            double rightYLength = 10 * Math.sin(Math.toRadians(rightWingAngle));
-                            this.line(curPosition, new Double[]{
-                                    curPosition[0] + leftXLength, curPosition[1] + leftYLength});
-                            this.line(curPosition, new Double[]{
-                                    curPosition[0] + rightXLength, curPosition[1] + rightYLength});
-                        }
-
-                        g2.setColor(Color.GREEN);
-                        if (curPosition[2] == 1) {
-                            g2.fillRoundRect(curPosition[0].intValue()-5, curPosition[1].intValue()-5, 10,10, 6, 6);
-                        }
-                        i++;
-                        prevPosition = curPosition;
-                    }
-//                }
-            }
-            shape.draw(g2, true);
+        Iterator<Double[]> it = obj.myShape.PositionHistory.iterator();
+        Double[] prevPosition = {0.0, 0.0, 0.0};
+        Double[] curPosition;
+        if (it.hasNext()) {
+            prevPosition = it.next();
         }
+        int i = 0;
+        while (it.hasNext()) {
+            curPosition = it.next();
+
+            if (!this.Preview) g2.setColor(obj.COLOR);
+            else g2.setColor(new Color((255/obj.myShape.PositionHistory.size())*i,(255/obj.myShape.PositionHistory.size())*i,(255/obj.myShape.PositionHistory.size())*i));
+            this.line(prevPosition, curPosition);
+            if (i%10 == 0 && !Preview) { // Only draws an arrow every 10 steps
+                Line change = new Line(curPosition, prevPosition); // Create direction arrows for history path
+                double leftWingAngle = change.Movement.coefficient() + 30;
+                double rightWingAngle = change.Movement.coefficient() - 30;
+                double leftXLength = 10 * Math.cos(Math.toRadians(leftWingAngle));
+                double leftYLength = 10 * Math.sin(Math.toRadians(leftWingAngle));
+                double rightXLength = 10 * Math.cos(Math.toRadians(rightWingAngle));
+                double rightYLength = 10 * Math.sin(Math.toRadians(rightWingAngle));
+                this.line(curPosition, new Double[]{
+                        curPosition[0] + leftXLength, curPosition[1] + leftYLength});
+                this.line(curPosition, new Double[]{
+                        curPosition[0] + rightXLength, curPosition[1] + rightYLength});
+            }
+
+            g2.setColor(Color.GREEN);
+            if (curPosition[2] == 1) {
+                g2.fillRoundRect(curPosition[0].intValue()-5, curPosition[1].intValue()-5, 10,10, 6, 6);
+            }
+            i++;
+            prevPosition = curPosition;
+        }
+        obj.myShape.draw(g2, true);
         returnToMainMenu.setBounds(PREF_X/2-80,20,160,40);
         this.add(returnToMainMenu);
     }
+
     public void line(Double[] Start, Double[] End) {
         g2.drawLine(Start[0].intValue(),Start[1].intValue(), End[0].intValue(),End[1].intValue());
     }
     public void line(ArrayList<Float> Start, ArrayList<Float> End)  {
         g2.drawLine(Start.get(0).intValue(),Start.get(1).intValue(), End.get(0).intValue(),End.get(1).intValue());
-    }
-}
-
-
-class MyShape {
-    public Path2D path = new Path2D.Double();
-    public Shape Shape;
-    public String Title;
-    public double PosX;
-    public double PosY;
-    public double initialPosX;
-    public double initialPosY;
-    public Path2D initialPath;
-    public boolean isCollided = false;
-    public ArrayList<Double[]> PositionHistory = new ArrayList<>();
-    public Color COLOR;
-
-    public MyShape(String name, Shape shape, Color color){
-        Title = name;
-        path.append(shape, true);
-        Shape = shape;
-        PosX = shape.getBounds().getMinX();
-        PosY = shape.getBounds().getMinY();
-        initialPosX = PosX;
-        initialPosY = PosY;
-        initialPath = path;
-        COLOR = color;
-        PositionHistory.add(new Double[]
-                {PosX+Shape.getBounds().width/2.0, PosY+Shape.getBounds().width/2.0,0.0});
-    }
-    public void translate(Double deltaX, Double deltaY) {
-        path.transform(AffineTransform.getTranslateInstance(deltaX, deltaY));
-        PosX += deltaX;
-        PosY += deltaY;
-        PositionHistory.add(new Double[]
-                {PosX+Shape.getBounds().width/2.0, PosY+Shape.getBounds().width/2.0,0.0});
-    }
-    public void draw(Graphics2D g2, boolean isFinal) {
-        if (!isFinal) {
-            if (!isCollided) {
-                g2.setColor(Color.BLACK);
-                g2.draw(path);
-                this.fill(g2);
-            }
-            if (isCollided) {
-                g2.setColor(Color.BLUE);
-                g2.draw(path);
-            }
-        }
-        else {
-            if (isCollided) {
-                g2.setColor(Color.BLUE);
-                g2.draw(path);
-            }
-        }
-    }
-    public void fill(Graphics2D g2) {
-        if (!isCollided) {
-            g2.setColor(COLOR);
-            g2.fill(path);
-        }
     }
 }
