@@ -1,6 +1,6 @@
 # 2-Dimensional Orbit Simulator
 This program was designed by Aila Mengden-Koon (Lincoln HS Year of 2023) as a teaching aid for Angie McVay's physics classes to help demonstrate the effect of gravitational forces.
-This file exists as a user manual for students using this program in a class setting or for personal use.
+This file exists as a user manual for students using this program in a class setting or for personal use, as well as a proof of ownership. The source code can be accessed at <https://github.com/akoon6599/astrophysics/> or mirrored at <https://github.com/EisbarGFX/astrophysics>.
 
 This work is protected under the Creative Commons Non-Commercial License. Use and re-distribution are allowed for personal or educational usage only.
 
