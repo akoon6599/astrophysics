@@ -1,9 +1,11 @@
 package physics;
 
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 
 public class Line {
+    public Color color;
     public ArrayList<Float> Start;
     public ArrayList<Float> End;
     public Movement Movement;
@@ -25,8 +27,9 @@ public class Line {
             angle += 360;
         }
         this.Movement = new Movement(String.format("%.2fd", angle), 0.00);
+        color = obj.COLOR;
     }
-    public Line(ArrayList<Float> Start, ArrayList<Float> End, float[] CENTER, float RADIUS) {
+    public Line(ArrayList<Float> Start, ArrayList<Float> End, float[] CENTER) {
         Start.set(0, Start.get(0)+CENTER[0]);
         Start.set(1, Start.get(1)+CENTER[1]);
         End.set(0, End.get(0)+CENTER[0]);
@@ -45,11 +48,23 @@ public class Line {
         this.Movement = new Movement(String.format("%.2fd", angle), 0.00);
     }
 
-    public Line(Double[] startPos, Double[] endPos) {
+    public Line(Double[] startPos, Double[] endPos, StellarBody obj) {
         Double oX = startPos[0];
         Double oY = startPos[1];
         Double sX = endPos[0];
         Double sY = endPos[1];
+
+        this.Start = new ArrayList<>();
+        Arrays.stream(startPos).toList().forEach(e -> {
+            float fl = e.floatValue();
+            Start.add(fl);
+        });
+        this.End = new ArrayList<>();
+        Arrays.stream(endPos).toList().forEach(e -> {
+            float fl = e.floatValue();
+            End.add(fl);
+        });
+
         double angle = Math.toDegrees(Math.atan2(sY - oY, sX - oX));
         this.Distance = Math.sqrt(Math.pow(sY - oY, 2) + Math.pow(sX - oX, 2));
         if (angle >= 360) {
@@ -60,5 +75,6 @@ public class Line {
         }
 
         this.Movement = new Movement(String.format("%.2fd", angle), 0.00);
+        this.color = obj.COLOR;
     }
 }

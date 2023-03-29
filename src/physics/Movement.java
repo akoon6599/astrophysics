@@ -1,7 +1,5 @@
 package physics;
 
-import java.util.Arrays;
-
 public class Movement {
     String Angle;
     Double Magnitude;

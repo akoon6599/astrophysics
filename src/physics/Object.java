@@ -1,7 +1,5 @@
 package physics;
 
-import jdk.jshell.spi.ExecutionControl;
-
 import java.util.ArrayList;
 
 // IMPORTANT: LIMITED TO 2D SPACE
@@ -28,10 +26,6 @@ public class Object {
     }
     public void overrideInitialMass(Double mass) {
         InitialMass = mass;
-    }
-    public void reset() throws ExecutionControl.NotImplementedException {
-        this.Position = InitialPosition;
-        this.Movement = InitialMovement;
     }
     public float[] getInitialPosition() {
         float[] rtn = new float[2];

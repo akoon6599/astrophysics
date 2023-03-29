@@ -6,6 +6,9 @@ import display.Start;
 import javax.swing.*;
 
 import java.awt.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.lang.reflect.InvocationTargetException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
@@ -15,7 +18,7 @@ public class system {
     public static final Double DistScale = 5.2e14;
     public static Double TimeScale = .1;
     public static long CycleDelay = 2; // Milliseconds
-    public static int CYCLES = 55;
+    public static int CYCLES = 200;
     static ArrayList<StellarBody> Bodies = new ArrayList<>();
     static Global GLOBAL;
     static Start START;
@@ -49,31 +52,71 @@ public class system {
         Bodies = newBodies;
         GLOBAL = new Global(Bodies, START);
         display(GLOBAL);
-        simulate(GLOBAL, Cycles);
+        Thread t = new Thread(() -> {
+            try {
+                simulate(GLOBAL, Cycles);
+            } catch (InterruptedException | InvocationTargetException e) {
+                throw new RuntimeException(e);
+            }
+        });
+        t.start();
+
     }
 
-    private static void simulate(Global global, int Cycles) throws InterruptedException {
+    private static void simulate(Global global, int Cycles) throws InterruptedException, InvocationTargetException {
         long[] CycleDelays = new long[Cycles];
         Thread.sleep(1000); // give screen a chance to open before starting sim
         Instant start = Instant.now();
-
+        KeyAdapter keyListener = new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (e.getKeyCode()==KeyEvent.VK_SPACE) {
+                    System.out.println("PRESSED");
+                    global.Paused = !global.Paused;
+                    global.pausedLabel.setVisible(global.Paused);
+                }
+            }
+        };
+        java.awt.EventQueue.invokeAndWait(() -> global.Frame.addKeyListener(keyListener));
 
         for (int currentCycle = 0; currentCycle < Cycles; currentCycle++) {
-            Instant startCycle = Instant.now();
-            global.collision(Bodies);
-            update_frame(global);
-            display_velocity(global, currentCycle);
+            if (!global.Paused) {
+                System.out.println("a");
+                Instant startCycle = Instant.now();
+                global.collision(Bodies);
+                java.awt.EventQueue.invokeAndWait(() -> update_frame(global));
 
-            Thread.sleep(CycleDelay);
-            Instant endCycle = Instant.now();
-            System.out.printf("%nCycle %s End: %s milliseconds%n%n", currentCycle, Duration.between(startCycle, endCycle).toMillis());
-            if (currentCycle!=0) {CycleDelays[currentCycle] = Duration.between(startCycle, endCycle).toMillis();}
+                Thread.sleep(CycleDelay);
+                Instant endCycle = Instant.now();
+                System.out.printf("%nCycle %s End: %s milliseconds%n%n", currentCycle, Duration.between(startCycle, endCycle).toMillis());
+                if (currentCycle != 0) {
+                    CycleDelays[currentCycle] = Duration.between(startCycle, endCycle).toMillis();
+                }
+            }
+            else {
+                currentCycle--;
+            }
         }
         Instant end = Instant.now();
         System.out.printf("Simulation End: %s seconds%n", Duration.between(start, end).toMillis()/1000.0);
 
-        // Initiate drawing historical paths for all objects
-        global.SimComplete = true;
+        java.awt.EventQueue.invokeAndWait(() -> {
+            GLOBAL.SimComplete = true;
+
+            System.out.println("Success");
+            GLOBAL.returnToMainMenu.setBounds(GLOBAL.PREF_X / 2 - 80, 20, 160, 40);
+            GLOBAL.add(GLOBAL.returnToMainMenu);
+            for (StellarBody body : Bodies) {
+                GLOBAL.drawHistory(GLOBAL.g2, body);
+            }
+            for (StellarBody body : GLOBAL.CollidedBodies) {
+                GLOBAL.drawHistory(GLOBAL.g2, body);
+            }
+
+            global.refresh();
+            global.Frame.removeKeyListener(keyListener);
+        });
+
         CycleDelays[0] = CycleDelay;
         int maxDev = 0;
         int maxCycle = 0;
@@ -86,6 +129,7 @@ public class system {
             }
         }
         System.out.printf("Maximum Deviation Between Cycle Delay and Real Time: %s milliseconds on Cycle %s%n", maxDev, maxCycle);
+        Thread.currentThread().interrupt();
     }
 
     private static void update_frame(Global global) {
@@ -110,8 +154,6 @@ public class system {
         }
         global.validate();
         global.velocityLabels.clear();
-    }
-    private static void display_velocity(Global global, int Frame) {
     }
 
     private static void display(Start start) {

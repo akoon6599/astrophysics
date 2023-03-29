@@ -8,7 +8,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.awt.event.WindowListener;
 import java.awt.geom.*;
 import java.util.*;
 
@@ -21,22 +20,26 @@ class GlobalFrame extends JFrame {
         return new Dimension(PREF_X, PREF_Y);
     }
     public GlobalFrame() {
+        this.getContentPane().setLayout(null);
     }
 }
 
 public class Global extends JPanel {
-    protected int PREF_X = 1440;
-    protected int PREF_Y = 1080;
+    public int PREF_X;
+    public int PREF_Y;
 //    public ArrayList<MyShape> Shapes = new ArrayList<>();
     public final JFrame Frame;
     public boolean SimComplete = false;
+    public boolean Paused = false;
     public boolean Preview;
     private final ArrayList<StellarBody> Bodies;
-    private ArrayList<StellarBody> CollidedBodies = new ArrayList<>();
-    protected Graphics2D g2;
+    public final ArrayList<StellarBody> CollidedBodies = new ArrayList<>();
+    public Graphics2D g2;
     protected final LinkedList<Line> Lines = new LinkedList<>();
     public ArrayList<JLabel> velocityLabels = new ArrayList<>();
-    private final JButton returnToMainMenu = new JButton("Exit To Menu");
+    public final JButton returnToMainMenu = new JButton("Exit To Menu");
+    public final JButton pauseButton = new JButton("ll");
+    public final JLabel pausedLabel = new JLabel("PAUSED");
     public void reset(Start start) {
         Bodies.clear();
         for (StellarBody b : start.initialBodies) {
@@ -50,8 +53,8 @@ public class Global extends JPanel {
     public Global(ArrayList<StellarBody> bodies, Start start) { // all-purpose
 
         Frame = new GlobalFrame();
+        setLayout(null);
         Frame.getContentPane().add(this);
-        this.Bodies = bodies;
 
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
         Insets scnMax = Toolkit.getDefaultToolkit().getScreenInsets(getGraphicsConfiguration());
@@ -61,12 +64,8 @@ public class Global extends JPanel {
         ((GlobalFrame) Frame).PREF_X = PREF_X;
         ((GlobalFrame) Frame).PREF_Y = PREF_Y;
 
-        setLayout(null);
-
-        this.Bodies.forEach(this::displayBody);
-        setPreferredSize(new Dimension(PREF_X, PREF_Y));
-        Frame.setTitle("Simulation");
-        Frame.pack();
+        this.setBounds(0,0,PREF_X,PREF_Y);
+        this.Bodies = bodies;
 
         returnToMainMenu.setFont(new Font("Times New Roman",Font.BOLD,16));
         returnToMainMenu.addActionListener(e -> {
@@ -76,6 +75,20 @@ public class Global extends JPanel {
         });
         Frame.setResizable(false);
 
+        pausedLabel.setBounds(20,20,250,40);
+        pausedLabel.setFont(new Font("Times New Roman", Font.BOLD, 26));
+        pausedLabel.setOpaque(true);
+        Color transparentRed = new Color(255,0,0,100);
+        pausedLabel.setForeground(transparentRed);
+
+        pausedLabel.setMaximumSize(new Dimension(250,40));
+        Frame.getContentPane().add(pausedLabel);
+        pausedLabel.setVisible(false);
+
+        this.Bodies.forEach(this::displayBody);
+        setPreferredSize(new Dimension(PREF_X, PREF_Y));
+        Frame.setTitle("Simulation");
+        Frame.pack();
     }
     public Global(ArrayList<StellarBody> bodies, Start.AddBody prevMenu) { // meant for previewMovement only
         Frame = new GlobalFrame();
@@ -130,11 +143,6 @@ public class Global extends JPanel {
                 if (!obj.myShape.isCollided) {
                     bodies.forEach(e -> {if (!e.Title.equals(obj.Title)) e.effect_movement(obj, 0.2, system.DistScale);});
                     this.move(obj, 0.2);
-
-//                float[] CENTER = new float[2];
-//                CENTER[0] = PREF_X / 2f;
-//                CENTER[1] = PREF_Y / 2f;
-//                Lines.add(new Line((ArrayList<Float>) obj.Position.clone(), (ArrayList<Float>) obj.Position.clone(), CENTER, obj.Radius));
                 }
             }
         }
@@ -154,11 +162,8 @@ public class Global extends JPanel {
 
         if (Objects.nonNull(obj.myShape)) {
             newShape.PositionHistory = obj.myShape.PositionHistory;
-            obj.myShape = newShape;
         }
-        else {
-            obj.myShape = newShape;
-        }
+        obj.myShape = newShape;
 
         JLabel velocity = new JLabel(String.format("%.2fkm/s",obj.Movement.getMagnitude()));
         velocity.setFont(new Font("Times New Roman",Font.PLAIN,12));
@@ -173,8 +178,8 @@ public class Global extends JPanel {
     public void collision(ArrayList<StellarBody> bodies) { // Goes through `bodies` and checks each for a collision
         ArrayList<StellarBody> toRemove = new ArrayList<>();
         ArrayList<String> Check = new ArrayList<>();
-        for (StellarBody prim : Bodies) {
-            for (StellarBody sec : Bodies) {
+        for (StellarBody prim : bodies) {
+            for (StellarBody sec : bodies) {
                 if (!prim.Title.equals(sec.Title) &&
                         !(Check.contains(String.format("%s->%s", prim.Title, sec.Title)) || Check.contains(String.format("%s->%s", sec.Title, prim.Title))) &&
                         (!prim.myShape.isCollided && !sec.myShape.isCollided)) {
@@ -203,41 +208,41 @@ public class Global extends JPanel {
 
                     if (!a2.isEmpty()) {
                         if (Objects.requireNonNull(prim).Mass > Objects.requireNonNull(sec).Mass) {
-                            sec.myShape.isCollided = true;
-                            prim.Mass += sec.Mass;
-                            sec.Movement.setMagnitude(0.0);
-                            prim.myShape.PositionHistory.add(new Double[] {
-                                    prim.myShape.PosX+prim.myShape.Shape.getBounds().width/2.0, prim.myShape.PosY+prim.myShape.Shape.getBounds().width/2.0, 1.0
-                            });
-                            CollidedBodies.add(sec);
-                            toRemove.add(sec);
+                            removeCollision(toRemove, prim, sec);
                         }
                         else if (prim.Mass < sec.Mass) {
-                            prim.myShape.isCollided = true;
-                            sec.Mass += prim.Mass;
-                            prim.Movement.setMagnitude(0.0);
-                            sec.myShape.PositionHistory.add(new Double[] {
-                                    sec.myShape.PosX+sec.myShape.Shape.getBounds().width/2.0, sec.myShape.PosY+sec.myShape.Shape.getBounds().width/2.0, 1.0
-                            });
-                            CollidedBodies.add(prim);
-                            toRemove.add(prim);
+                            removeCollision(toRemove, sec, prim);
                         }
                     }
                     Check.add(String.format("%s->%s", prim.Title, sec.Title));
                 }
             }
         }
-        toRemove.forEach(Bodies::remove);
+        toRemove.forEach(bodies::remove);
     }
+
+    private void removeCollision(ArrayList<StellarBody> toRemove, StellarBody prim, StellarBody sec) {
+        sec.myShape.isCollided = true;
+        prim.Mass += sec.Mass;
+        sec.Movement.setMagnitude(0.0);
+        prim.myShape.PositionHistory.add(new Double[] {
+                prim.myShape.PosX+prim.myShape.Shape.getBounds().width/2.0, prim.myShape.PosY+prim.myShape.Shape.getBounds().width/2.0, 1.0
+        });
+        CollidedBodies.add(sec);
+        toRemove.add(sec);
+    }
+
     @Override
     public void paintComponent(Graphics g) {
+        System.out.println("paint");
         super.paintComponent(g);
         g2 = g!=null?(Graphics2D)g:g2;
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         if (!Lines.isEmpty()) {
             for (Line line : Lines) {
-                g2.setColor(Color.BLUE);
-                g2.setStroke(new BasicStroke(3));
+                if (Objects.nonNull(line.color)) g2.setColor(line.color);
+                else g2.setColor(Color.BLUE);
+                g2.setStroke(new BasicStroke(1));
                 g2.drawLine(line.Start.get(0).intValue(),line.Start.get(1).intValue(),line.End.get(0).intValue(),line.End.get(1).intValue());
                 g2.setColor(Color.BLACK);
                 g2.setStroke(new BasicStroke(1));
@@ -246,14 +251,7 @@ public class Global extends JPanel {
         for (StellarBody body : Bodies) {
             body.myShape.draw(g2, false);
         }
-        if (SimComplete || Preview) {
-            for (StellarBody body : Bodies) {
-                drawHistory(g2, body);
-            }
-            for (StellarBody body : CollidedBodies) {
-                drawHistory(g2, body);
-            }
-        }
+
     }
 
     public void refresh() { // refreshes the canvas in real-time. god this took me ages to find the solution to
@@ -273,9 +271,9 @@ public class Global extends JPanel {
 
             if (!this.Preview) g2.setColor(obj.COLOR);
             else g2.setColor(new Color((255/obj.myShape.PositionHistory.size())*i,(255/obj.myShape.PositionHistory.size())*i,(255/obj.myShape.PositionHistory.size())*i));
-            this.line(prevPosition, curPosition);
+            this.line(prevPosition, curPosition, obj);
             if (i%10 == 0 && !Preview) { // Only draws an arrow every 10 steps
-                Line change = new Line(curPosition, prevPosition); // Create direction arrows for history path
+                Line change = new Line(curPosition, prevPosition, obj); // Create direction arrows for history path
                 double leftWingAngle = change.Movement.coefficient() + 30;
                 double rightWingAngle = change.Movement.coefficient() - 30;
                 double leftXLength = 10 * Math.cos(Math.toRadians(leftWingAngle));
@@ -283,9 +281,9 @@ public class Global extends JPanel {
                 double rightXLength = 10 * Math.cos(Math.toRadians(rightWingAngle));
                 double rightYLength = 10 * Math.sin(Math.toRadians(rightWingAngle));
                 this.line(curPosition, new Double[]{
-                        curPosition[0] + leftXLength, curPosition[1] + leftYLength});
+                        curPosition[0] + leftXLength, curPosition[1] + leftYLength}, obj);
                 this.line(curPosition, new Double[]{
-                        curPosition[0] + rightXLength, curPosition[1] + rightYLength});
+                        curPosition[0] + rightXLength, curPosition[1] + rightYLength}, obj);
             }
 
             g2.setColor(Color.GREEN);
@@ -296,11 +294,10 @@ public class Global extends JPanel {
             prevPosition = curPosition;
         }
         obj.myShape.draw(g2, true);
-        returnToMainMenu.setBounds(PREF_X/2-80,20,160,40);
-        this.add(returnToMainMenu);
     }
 
-    public void line(Double[] Start, Double[] End) {
+    public void line(Double[] Start, Double[] End, StellarBody obj) {
+        Lines.add(new Line(Start, End, obj));
         g2.drawLine(Start[0].intValue(),Start[1].intValue(), End[0].intValue(),End[1].intValue());
     }
     public void line(ArrayList<Float> Start, ArrayList<Float> End)  {

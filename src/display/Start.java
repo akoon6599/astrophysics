@@ -191,7 +191,7 @@ public class Start extends JFrame {
             JLabel colText = new JLabel("Color (R,G,B): ");
             JLabel ancText = new JLabel("Anchor: ");
             JLabel errorText = new JLabel("");
-            JLabel comboText = new JLabel("Parent Body: ");
+            JLabel comboText = new JLabel("Orbit Focus: ");
             JLabel trackText = new JLabel("Display Velocity During Simulation: ");
             JLabel orbitDistText = new JLabel("Perihelion (.5e6km): ");
             orbitDistText.setVisible(false);
@@ -480,7 +480,7 @@ public class Start extends JFrame {
             JLabel colText = new JLabel("Color (R,G,B): ");
             JLabel ancText = new JLabel("Anchor: ");
             JLabel errorText = new JLabel("");
-            JLabel comboText = new JLabel("Parent Body: ");
+            JLabel comboText = new JLabel("Orbit Focus: "); // TODO: maybe add an option to orbit around an empty point?
             JLabel trackText = new JLabel("Display Velocity During Simulation: ");
             JLabel orbitDistText = new JLabel("Perihelion (.5e6km): ");
             orbitDistText.setVisible(false);
