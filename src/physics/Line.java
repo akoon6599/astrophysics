@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 public class Line {
-    public Color color;
+    public Color Color;
     public ArrayList<Float> Start;
     public ArrayList<Float> End;
     public Movement Movement;
@@ -27,7 +27,7 @@ public class Line {
             angle += 360;
         }
         this.Movement = new Movement(String.format("%.2fd", angle), 0.00);
-        color = obj.COLOR;
+        Color = obj.COLOR;
     }
     public Line(ArrayList<Float> Start, ArrayList<Float> End, float[] CENTER) {
         Start.set(0, Start.get(0)+CENTER[0]);
@@ -48,7 +48,7 @@ public class Line {
         this.Movement = new Movement(String.format("%.2fd", angle), 0.00);
     }
 
-    public Line(Double[] startPos, Double[] endPos, StellarBody obj) {
+    public Line(Double[] startPos, Double[] endPos, Color color) {
         Double oX = startPos[0];
         Double oY = startPos[1];
         Double sX = endPos[0];
@@ -75,6 +75,6 @@ public class Line {
         }
 
         this.Movement = new Movement(String.format("%.2fd", angle), 0.00);
-        this.color = obj.COLOR;
+        this.Color = color;
     }
 }

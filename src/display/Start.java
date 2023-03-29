@@ -286,7 +286,6 @@ public class Start extends JFrame {
                             displayBodies.add(b.clone());
                         }
                     }
-                    displayBodies.forEach(f -> System.out.println(f.Title));
                     Global GLOBAL = new Global(displayBodies, this);
                     system.display(GLOBAL);
                     GLOBAL.previewMovement(displayBodies);
@@ -305,8 +304,6 @@ public class Start extends JFrame {
                     GLOBAL.addMouseListener(new MouseAdapter() {
                         @Override
                         public void mouseClicked(MouseEvent e) {
-                            System.out.println(e.getX()-GLOBAL.PREF_X/2);
-                            System.out.println(e.getY()-GLOBAL.PREF_Y/2);
                             AddBody.this.posx.setText(String.valueOf(e.getX()-GLOBAL.PREF_X/2));
                             AddBody.this.posy.setText(String.valueOf(e.getY()-GLOBAL.PREF_Y/2));
                             GLOBAL.Frame.dispose();
@@ -553,7 +550,7 @@ public class Start extends JFrame {
                         match.set(body.clone());
                     }
                 }
-//                System.out.println()
+
                 if (!match.equals(new AtomicReference<>()) && !String.valueOf(defaultChoices.getSelectedItem()).equals("None") && !String.valueOf(defaultChoices.getSelectedItem()).equals(defaultChoice)) {
                     StellarBody nB = match.get().clone();
                     angle.setText(String.valueOf(nB.Movement.coefficient()));
@@ -635,8 +632,6 @@ public class Start extends JFrame {
                     GLOBAL.addMouseListener(new MouseAdapter() {
                         @Override
                         public void mouseClicked(MouseEvent e) {
-                            System.out.println(e.getX()-GLOBAL.PREF_X/2);
-                            System.out.println(e.getY()-GLOBAL.PREF_Y/2);
                             AddBody.this.posx.setText(String.valueOf(e.getX()-GLOBAL.PREF_X/2));
                             AddBody.this.posy.setText(String.valueOf(e.getY()-GLOBAL.PREF_Y/2));
                             GLOBAL.Frame.dispose();

@@ -8,6 +8,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Path2D;
+import java.awt.geom.Rectangle2D;
 import java.lang.reflect.InvocationTargetException;
 import java.time.Duration;
 import java.time.Instant;
@@ -71,7 +74,6 @@ public class system {
             @Override
             public void keyPressed(KeyEvent e) {
                 if (e.getKeyCode()==KeyEvent.VK_SPACE) {
-                    System.out.println("PRESSED");
                     global.Paused = !global.Paused;
                     global.pausedLabel.setVisible(global.Paused);
                 }
@@ -81,7 +83,6 @@ public class system {
 
         for (int currentCycle = 0; currentCycle < Cycles; currentCycle++) {
             if (!global.Paused) {
-                System.out.println("a");
                 Instant startCycle = Instant.now();
                 global.collision(Bodies);
                 java.awt.EventQueue.invokeAndWait(() -> update_frame(global));
@@ -103,7 +104,6 @@ public class system {
         java.awt.EventQueue.invokeAndWait(() -> {
             GLOBAL.SimComplete = true;
 
-            System.out.println("Success");
             GLOBAL.returnToMainMenu.setBounds(GLOBAL.PREF_X / 2 - 80, 20, 160, 40);
             GLOBAL.add(GLOBAL.returnToMainMenu);
             for (StellarBody body : Bodies) {

@@ -151,9 +151,6 @@ public class Global extends JPanel {
         }
     }
 
-
-
-
     public void displayBody(StellarBody obj) {
         MyShape newShape = new MyShape(obj.Title, new Ellipse2D.Float( // Create a new shape, missing history and flags
                 PREF_X / 2f + obj.Position.get(0) - obj.Radius.floatValue(),
@@ -234,13 +231,12 @@ public class Global extends JPanel {
 
     @Override
     public void paintComponent(Graphics g) {
-        System.out.println("paint");
         super.paintComponent(g);
         g2 = g!=null?(Graphics2D)g:g2;
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         if (!Lines.isEmpty()) {
             for (Line line : Lines) {
-                if (Objects.nonNull(line.color)) g2.setColor(line.color);
+                if (Objects.nonNull(line.Color)) g2.setColor(line.Color);
                 else g2.setColor(Color.BLUE);
                 g2.setStroke(new BasicStroke(1));
                 g2.drawLine(line.Start.get(0).intValue(),line.Start.get(1).intValue(),line.End.get(0).intValue(),line.End.get(1).intValue());
@@ -271,9 +267,9 @@ public class Global extends JPanel {
 
             if (!this.Preview) g2.setColor(obj.COLOR);
             else g2.setColor(new Color((255/obj.myShape.PositionHistory.size())*i,(255/obj.myShape.PositionHistory.size())*i,(255/obj.myShape.PositionHistory.size())*i));
-            this.line(prevPosition, curPosition, obj);
+            this.line(prevPosition, curPosition, g2.getColor());
             if (i%10 == 0 && !Preview) { // Only draws an arrow every 10 steps
-                Line change = new Line(curPosition, prevPosition, obj); // Create direction arrows for history path
+                Line change = new Line(curPosition, prevPosition, g2.getColor()); // Create direction arrows for history path
                 double leftWingAngle = change.Movement.coefficient() + 30;
                 double rightWingAngle = change.Movement.coefficient() - 30;
                 double leftXLength = 10 * Math.cos(Math.toRadians(leftWingAngle));
@@ -281,9 +277,9 @@ public class Global extends JPanel {
                 double rightXLength = 10 * Math.cos(Math.toRadians(rightWingAngle));
                 double rightYLength = 10 * Math.sin(Math.toRadians(rightWingAngle));
                 this.line(curPosition, new Double[]{
-                        curPosition[0] + leftXLength, curPosition[1] + leftYLength}, obj);
+                        curPosition[0] + leftXLength, curPosition[1] + leftYLength}, g2.getColor());
                 this.line(curPosition, new Double[]{
-                        curPosition[0] + rightXLength, curPosition[1] + rightYLength}, obj);
+                        curPosition[0] + rightXLength, curPosition[1] + rightYLength}, g2.getColor());
             }
 
             g2.setColor(Color.GREEN);
@@ -296,8 +292,8 @@ public class Global extends JPanel {
         obj.myShape.draw(g2, true);
     }
 
-    public void line(Double[] Start, Double[] End, StellarBody obj) {
-        Lines.add(new Line(Start, End, obj));
+    public void line(Double[] Start, Double[] End, Color color) {
+        Lines.add(new Line(Start, End, color));
         g2.drawLine(Start[0].intValue(),Start[1].intValue(), End[0].intValue(),End[1].intValue());
     }
     public void line(ArrayList<Float> Start, ArrayList<Float> End)  {
