@@ -45,7 +45,10 @@ public class system {
     }
 
     public static void main(String[] args) {
+        // Set the rendering system
         System.setProperty("sun.java2d.opengl", "true");
+
+        // Create and add default StellarBody options
         initDefaultBodies();
 
         START = new Start(Bodies);
@@ -55,6 +58,8 @@ public class system {
         Bodies = newBodies;
         GLOBAL = new Global(Bodies, START);
         display(GLOBAL);
+
+        // Begin simulation in new Thread to allow for simultaneous simulation and input listening
         Thread t = new Thread(() -> {
             try {
                 simulate(GLOBAL, Cycles);
@@ -70,6 +75,8 @@ public class system {
         long[] CycleDelays = new long[Cycles];
         Thread.sleep(1000); // give screen a chance to open before starting sim
         Instant start = Instant.now();
+
+        // Create keyboard listener to listen for pause commands
         KeyAdapter keyListener = new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
@@ -79,17 +86,28 @@ public class system {
                 }
             }
         };
+
+        /*  All GUI-based actions must be executed inside AWT's Event Dispatch Thread.
+            simulate(GLOBAL, Cycles) is called outside the EDT in a new Thread, and so we must explicitly
+            connect back to the EDT when using the GUI. invokeAndWait tells the current Thread to wait
+            until the desired function is finished.*/
         java.awt.EventQueue.invokeAndWait(() -> global.Frame.addKeyListener(keyListener));
 
         for (int currentCycle = 0; currentCycle < Cycles; currentCycle++) {
             if (!global.Paused) {
+                // Take time at beginning and end of Cycle to determine actual cycle frame timing
                 Instant startCycle = Instant.now();
+
+                // Non-GUI functions can be executed outside the AWT EDT
                 global.collision(Bodies);
                 java.awt.EventQueue.invokeAndWait(() -> update_frame(global));
+
+                // Subtract the actual cycle frame timing from the frame delay to find how much the frame should wait
                 Instant endCycle = Instant.now();
                 long realTime = Duration.between(startCycle, endCycle).toMillis();
                 long newDelay = Math.max(0, CycleDelay-realTime);
 
+                // Wait for the new Frame Delay and then output the cycle timing to the Console
                 Thread.sleep(newDelay);
                 System.out.printf("%nCycle %s End: %s milliseconds%n%n", currentCycle, realTime+newDelay);
                 if (currentCycle != 0) {
@@ -97,17 +115,24 @@ public class system {
                 }
             }
             else {
+                // "Pause" the simulation by subtracting one from the cycle count
+                // essentially as if that for cycle did not process
                 currentCycle--;
             }
         }
+        // Output total simulation timing to the Console
         Instant end = Instant.now();
         System.out.printf("Simulation End: %s seconds%n", Duration.between(start, end).toMillis()/1000.0);
 
+        // Re-enter EDT to complete the simulation
         java.awt.EventQueue.invokeAndWait(() -> {
             GLOBAL.SimComplete = true;
 
+            // Display the Return to Menu button
             GLOBAL.returnToMainMenu.setBounds(GLOBAL.PREF_X / 2 - 80, 20, 160, 40);
             GLOBAL.add(GLOBAL.returnToMainMenu);
+
+            // Display the historical orbital path for each body
             for (StellarBody body : Bodies) {
                 GLOBAL.drawHistory(GLOBAL.g2, body);
             }
@@ -115,10 +140,12 @@ public class system {
                 GLOBAL.drawHistory(GLOBAL.g2, body);
             }
 
+            // Refresh the simulation screen and remove the keyboard listener now that it is not needed
             global.refresh();
             global.Frame.removeKeyListener(keyListener);
         });
 
+        // Determine the max real-world cycle frame timing deviation from the frame delay
         CycleDelays[0] = CycleDelay;
         int maxDev = 0;
         int maxCycle = 0;
@@ -130,24 +157,29 @@ public class system {
                 maxCycle = i;
             }
         }
-        System.out.printf("Maximum Deviation Between Cycle Delay and Real Time: %s milliseconds on Cycle %s%n", maxDev, maxCycle);
+        System.out.printf("Maximum Deviation Between Cycle Delay and Real Time: %s milliseconds on Cycle %s%n",
+                maxDev, maxCycle);
+
+        // End (interrupt) the simulation Thread so that we are not leaving hanging Threads each time the simulation ends
         Thread.currentThread().interrupt();
     }
 
     private static void update_frame(Global global) {
+        // Refresh the simulation frame
         global.refresh();
+
+        // Calculate gravitational effects for, move, and then display each body
         for (StellarBody body : Bodies) {
             Bodies.forEach(item -> {if (!item.Title.equals(body.Title))
             {
                 body.effect_movement(item, TimeScale, DistScale); // Each body effects every other body
             }
             });
-            if (!body.STATIC) {
-                global.move(body, TimeScale);
-            }
+            if (!body.STATIC) global.move(body, TimeScale);
             global.displayBody(body);
         }
 
+        // Clear all previous labels from the frame and add the velocity tracking labels
         global.removeAll();
         for (StellarBody body : Bodies) {
             if (body.TRACKVEL) {

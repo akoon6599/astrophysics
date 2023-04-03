@@ -32,7 +32,7 @@ Current stellar bodies will be listed on the left with the<br>
 &nbsp;&nbsp;&nbsp;5. Mass expressed in 1e24kg, where this is 1:1 with reality<br>
 &nbsp;&nbsp;&nbsp;6. Position expressed in a pair of (x,y) pixel coordinates, where:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i. 2 pixels represent 1e6 kilometers in reality<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\— For example, the Earth's Aphelion of 152e6 km (positioned positively along the X axis) would be represented as (304,0)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\— For example, the Earth's Aphelion of 152e6 km (positioned positively along the X axis) would be represented as (304,0)<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ii. and the position (0,0) represents the very center of the window<br>
 &nbsp;&nbsp;&nbsp;7. "Anchor" attribute, where a true value represents a stationary body (Often a star or other orbital focus)<br>
 
@@ -60,8 +60,8 @@ At the bottom left is a cog button. Clicking it will open the `Settings Menu`.<b
 
 `Length of Simulation` is how long the simulation will run in seconds; however, this is not exact, and will most likely run (up to) twice that length due to cycle frame delays.
 
-`Delay Between Frames` is the minimum delay in ms between each cycle frame. This does not affect the physics except to determine the total number of steps in order to fit within the `Simulation Length` with the appropriate frame time. If you notice the simulation lags or jitters, try increasing this value slightly to give the computer more time to process each frame cycle.  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\— Worth noting is that if a frame takes longer than this value to execute due to calculation times, this value will be ignored and the next frame will begin immediately.
+`Delay Between Frames` is the minimum delay in ms between each cycle frame. This does not affect the physics except to determine the total number of steps in order to fit within the `Simulation Length` with the appropriate frame time. If you notice the simulation lags or jitters, try increasing this value slightly to give the computer more time to process each cycle frame.<br>
+&nbsp;&nbsp;&nbsp;\— Worth noting is that if a frame takes longer than this value to execute due to calculation times, this value will be ignored and the next frame will begin immediately.
   
 ----
 The simulation will begin on pressing the `Start Simulation` button in the `Main Menu Screen`. While the simulation is running, press the <kbd>Space</kbd> or <kbd>P</kbd> keys at any time to pause the simulation. A semi-transparent red label will appear at the top-left indicating that the simulation has been paused. Once the simulation is over, the orbital paths of each body will be displayed in the body's color and a `Exit to Menu` button will appear. Clicking it will return you to the `Main Menu Screen`, where you can edit the system or run the simulation again.

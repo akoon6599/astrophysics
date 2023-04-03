@@ -36,10 +36,12 @@ public class Start extends JFrame {
         for (StellarBody b : Bodies) {
             initialBodies.add(b.clone());
         }
+
         layout = new GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setAutoCreateGaps(true);
         layout.setAutoCreateContainerGaps(true);
+
         mainMenu();
     }
     public void reset() {
@@ -52,6 +54,7 @@ public class Start extends JFrame {
         components = new ArrayList<>();
         bodyButtons = new ArrayList<>();
 
+        // Prepare component list for dynamic body addition
         setTitle("Main Menu");
         JButton addBBody = new JButton("Add Body");
         addBBody.setFont(new Font("Times New Roman", Font.BOLD, 24));
@@ -63,18 +66,21 @@ public class Start extends JFrame {
         settingsBtn.setSize(new Dimension(16,16));
         settingsBtn.addActionListener(e -> new Settings().setVisible(true));
 
+        // Add a JLabel for each StellarBody
         for (StellarBody body : Bodies) {
             bodyButtons.add(new JButton(body.Title));
             bodyLabels.add(new JLabel(
                     String.format("Angle: %.2f -- Velocity: %.3f km/s-- Classification: %s -- Mass: %.3fe24 kg -- Pos (X,Y): (%.0f, %.0f) px -- Anchor: %s",
                             body.Movement.coefficient(), body.Movement.getMagnitude(), body.Classification, body.Mass/1e24, body.Position.get(0), body.Position.get(1), body.STATIC)));
         }
+        // Add a corresponding JButton
         for (JButton btn : new ArrayList<>(bodyButtons)) {
             btn.addActionListener(e -> new AddBody(Start.this.Bodies.get(bodyButtons.indexOf(btn))).setVisible(true));
         }
 
 
-        GroupLayout.SequentialGroup bodyField = layout.createSequentialGroup() // HORIZONTAL
+        // Prepare the specific component sections
+        GroupLayout.SequentialGroup bodyField = layout.createSequentialGroup()
                 .addGap(6, 6, 6);
         GroupLayout.ParallelGroup tmpBButtons = layout.createParallelGroup(LEADING);
         for (JButton c : bodyButtons) {
@@ -94,8 +100,8 @@ public class Start extends JFrame {
             }
         });
 
-
         JLabel INFO = new JLabel("Click to Edit");
+
         bodyField.addGroup(tmpBButtons).addGroup(tmpBLabels); // HORIZONTAL
         layout.setHorizontalGroup(
                 layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -110,13 +116,13 @@ public class Start extends JFrame {
                                 .addComponent(Simulate)
                                 .addComponent(addBBody))
         ));
-
         GroupLayout.SequentialGroup pBodyField = layout.createSequentialGroup() // VERTICAL
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(TRAILING)
                     .addComponent(INFO)
                     .addComponent(addBBody))
                 .addGap(30,30,30);
+
         ArrayList<GroupLayout.ParallelGroup> help = new ArrayList<>();
         for (JButton c: bodyButtons) {
             help.add(layout.createParallelGroup(BASELINE)

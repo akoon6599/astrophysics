@@ -38,7 +38,6 @@ public class Global extends JPanel {
     protected final LinkedList<Line> Lines = new LinkedList<>();
     public ArrayList<JLabel> velocityLabels = new ArrayList<>();
     public final JButton returnToMainMenu = new JButton("Exit To Menu");
-    public final JButton pauseButton = new JButton("ll");
     public final JLabel pausedLabel = new JLabel("PAUSED");
     public void reset(Start start) {
         Bodies.clear();
@@ -168,11 +167,13 @@ public class Global extends JPanel {
                 PREF_Y / 2f + obj.Position.get(1) - obj.Radius.floatValue(),
                 obj.Radius.floatValue() * 2, obj.Radius.floatValue() * 2), obj.COLOR);
 
+        // If the StellarBody has a previous Shape, set the new Shape's position history as the old one's
         if (Objects.nonNull(obj.myShape)) {
             newShape.PositionHistory = obj.myShape.PositionHistory;
         }
         obj.myShape = newShape;
 
+        // Create Velocity Labels
         JLabel velocity = new JLabel(String.format("%.2fkm/s",obj.Movement.getMagnitude()));
         velocity.setFont(new Font("Times New Roman",Font.PLAIN,12));
         velocity.setBounds(PREF_X/2+obj.Position.get(0).intValue()+obj.Radius+10, PREF_Y/2+obj.Position.get(1).intValue()-(obj.Radius*2)-10, 80,20);
@@ -184,14 +185,18 @@ public class Global extends JPanel {
         obj.myShape.translate(mv[0], mv[1]);
     }
     public void collision(ArrayList<StellarBody> bodies) { // Goes through `bodies` and checks each for a collision
+        // Define a list of StellarBodies to remove afterwards and a list of Body titles already checked for collisions
         ArrayList<StellarBody> toRemove = new ArrayList<>();
         ArrayList<String> Check = new ArrayList<>();
+
         for (StellarBody prim : bodies) {
             for (StellarBody sec : bodies) {
+                // Ensure that we are not checking the same StellarBody or one we already have
                 if (!prim.Title.equals(sec.Title) &&
                         !(Check.contains(String.format("%s->%s", prim.Title, sec.Title)) || Check.contains(String.format("%s->%s", sec.Title, prim.Title))) &&
                         (!prim.myShape.isCollided && !sec.myShape.isCollided)) {
 
+                    // Create a new Path, which turns the border of the StellarBody's Shape into a manipulatable vector path
                     AffineTransform at = new AffineTransform();
                     GeneralPath pathObj = new GeneralPath();
                     pathObj.append(prim.myShape.Shape.getPathIterator(at), false);
@@ -201,6 +206,7 @@ public class Global extends JPanel {
                     pathObj.reset();
                     pathObj.append(prim.myShape.Shape.getPathIterator(at), false);
 
+                    // Do the same for the second StellarBody
                     at = new AffineTransform();
                     GeneralPath pathShape = new GeneralPath();
                     pathShape.append(sec.myShape.Shape.getPathIterator(at), false);
@@ -210,11 +216,15 @@ public class Global extends JPanel {
                     pathShape.reset();
                     pathShape.append(sec.myShape.Shape.getPathIterator(at), false);
 
+                    // Turn the Paths into Areas, and check if one intersects the other (a collision)
+                    // This essentially performs a Union operation, removing all area that is not overlapped
                     Area a1 = new Area(pathObj);
                     Area a2 = new Area(pathShape);
                     a2.intersect(a1);
 
+                    // No intersection means Area 2 now has no area stored
                     if (!a2.isEmpty()) {
+                        // Determine which object is heavier, an oversimplified means of determining which object would remain after collision
                         if (Objects.requireNonNull(prim).Mass > Objects.requireNonNull(sec).Mass) {
                             removeCollision(toRemove, prim, sec);
                         }
@@ -226,6 +236,7 @@ public class Global extends JPanel {
                 }
             }
         }
+        // Remove all collided bodies from the simulation list
         toRemove.forEach(bodies::remove);
     }
 
@@ -243,8 +254,11 @@ public class Global extends JPanel {
     @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
+        // Sets the 2D Graphics variable each frame
         g2 = g!=null?(Graphics2D)g:g2;
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+        // Display
         if (!Lines.isEmpty()) {
             for (Line line : Lines) {
                 if (Objects.nonNull(line.Color)) g2.setColor(line.Color);

@@ -51,7 +51,10 @@ public class MyShape {
     }
 
     public void translate(Double deltaX, Double deltaY) {
+        // Move Path Transform
         path.transform(AffineTransform.getTranslateInstance(deltaX, deltaY));
+
+        // Change Position variables and add new Position to history
         PosX += deltaX;
         PosY += deltaY;
         PositionHistory.add(new Double[]

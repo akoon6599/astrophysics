@@ -18,6 +18,8 @@ public class Line {
         Float sY = this.End.get(1);
         Float oX = this.Start.get(0);
         Float oY = this.Start.get(1);
+
+        // Clamp angle to between 0 and +360 degrees
         double angle = Math.toDegrees(Math.atan2(sY - oY, sX - oX));
         this.Distance = Math.sqrt(Math.pow(sY - oY, 2) + Math.pow(sX - oX, 2));
         if (angle >= 360) {
@@ -29,6 +31,9 @@ public class Line {
         this.Movement = new Movement(String.format("%.2fd", angle), 0.00);
         Color = obj.COLOR;
     }
+
+    // Original usage replaced by StellarBody,StellarBody and Double[],Double[] implementations
+    @Deprecated
     public Line(ArrayList<Float> Start, ArrayList<Float> End, float[] CENTER) {
         Start.set(0, Start.get(0)+CENTER[0]);
         Start.set(1, Start.get(1)+CENTER[1]);
@@ -54,6 +59,7 @@ public class Line {
         Double sX = endPos[0];
         Double sY = endPos[1];
 
+        // Convert positions to ArrayList<Float> for class storage
         this.Start = new ArrayList<>();
         Arrays.stream(startPos).toList().forEach(e -> {
             float fl = e.floatValue();
