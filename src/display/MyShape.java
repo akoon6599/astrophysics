@@ -65,13 +65,17 @@ public class MyShape {
                 g2.draw(path);
                 this.fill(g2);
             }
-            if (isCollided) {
+            else {
                 g2.setColor(Color.BLUE);
                 g2.draw(path);
             }
         } else {
             if (isCollided) {
                 g2.setColor(Color.BLUE);
+                g2.draw(path);
+            }
+            else {
+                g2.setColor(COLOR);
                 g2.draw(path);
             }
         }

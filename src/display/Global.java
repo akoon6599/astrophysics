@@ -51,7 +51,6 @@ public class Global extends JPanel {
     }
 
     public Global(ArrayList<StellarBody> bodies, Start start) { // all-purpose
-
         Frame = new GlobalFrame();
         setLayout(null);
         Frame.getContentPane().add(this);
@@ -92,8 +91,10 @@ public class Global extends JPanel {
     }
     public Global(ArrayList<StellarBody> bodies, Start.AddBody prevMenu) { // meant for previewMovement only
         Frame = new GlobalFrame();
+        setLayout(null);
         Frame.getContentPane().add(this);
-        this.Bodies = bodies;
+
+        this.Frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
         Insets scnMax = Toolkit.getDefaultToolkit().getScreenInsets(getGraphicsConfiguration());
@@ -103,27 +104,37 @@ public class Global extends JPanel {
         ((GlobalFrame) Frame).PREF_X = PREF_X;
         ((GlobalFrame) Frame).PREF_Y = PREF_Y;
 
-        this.Bodies.forEach(this::displayBody);
-        setPreferredSize(new Dimension(PREF_X, PREF_Y));
+        this.setBounds(0,0,PREF_X,PREF_Y);
+        this.Bodies = bodies;
+
         returnToMainMenu.setText("Close Preview");
         returnToMainMenu.setFont(new Font("Times New Roman",Font.BOLD,16));
         returnToMainMenu.addActionListener(e -> {
             prevMenu.toFront();
             prevMenu.requestFocus();
+            this.Preview = false;
             this.Frame.dispose();
         });
-        returnToMainMenu.setBounds(PREF_X/2-40,10,80,20);
+        returnToMainMenu.setBounds(PREF_X/2-80,20,160,40);
         this.add(returnToMainMenu);
-        Frame.setTitle("Preview Movement");
-        Frame.pack();
-        Frame.setResizable(false);
 
         this.Frame.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
+                prevMenu.toFront();
+                prevMenu.requestFocus();
                 Global.this.Preview = false;
+                Global.this.Frame.dispose();
             }
         });
+
+        this.Bodies.forEach(this::displayBody);
+        setPreferredSize(new Dimension(PREF_X, PREF_Y));
+
+        Frame.setTitle("Preview Movement");
+        Frame.pack();
+        Frame.setResizable(false);
+
     }
     @Override
     public Dimension getPreferredSize() {

@@ -73,7 +73,7 @@ public class system {
         KeyAdapter keyListener = new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
-                if (e.getKeyCode()==KeyEvent.VK_SPACE) {
+                if (e.getKeyCode()==KeyEvent.VK_SPACE || e.getKeyCode()==KeyEvent.VK_P) {
                     global.Paused = !global.Paused;
                     global.pausedLabel.setVisible(global.Paused);
                 }
@@ -86,12 +86,14 @@ public class system {
                 Instant startCycle = Instant.now();
                 global.collision(Bodies);
                 java.awt.EventQueue.invokeAndWait(() -> update_frame(global));
-
-                Thread.sleep(CycleDelay);
                 Instant endCycle = Instant.now();
-                System.out.printf("%nCycle %s End: %s milliseconds%n%n", currentCycle, Duration.between(startCycle, endCycle).toMillis());
+                long realTime = Duration.between(startCycle, endCycle).toMillis();
+                long newDelay = Math.max(0, CycleDelay-realTime);
+
+                Thread.sleep(newDelay);
+                System.out.printf("%nCycle %s End: %s milliseconds%n%n", currentCycle, realTime+newDelay);
                 if (currentCycle != 0) {
-                    CycleDelays[currentCycle] = Duration.between(startCycle, endCycle).toMillis();
+                    CycleDelays[currentCycle] = realTime+newDelay;
                 }
             }
             else {
@@ -167,7 +169,6 @@ public class system {
     public static void display(Global global) {
         global.Frame.add(global);
         global.validate();
-        global.Frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         global.Frame.setVisible(true);
         global.setVisible(true);
     }
